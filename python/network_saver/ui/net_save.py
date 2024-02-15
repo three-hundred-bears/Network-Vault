@@ -1,5 +1,6 @@
 """Contains a GUI allowing a user to save their Houdini network to disk."""
 
+import io
 import os
 from getpass import getuser
 import json
@@ -8,22 +9,7 @@ import shutil
 from PySide2 import QtCore, QtWidgets
 import hou
 
-
-def get_data_dir():
-    current_dir = os.path.realpath(__file__)
-    return os.path.join(
-        os.path.dirname(os.path.dirname(current_dir)),
-        'data'
-    )
-
-
-def get_vault_dir():
-    vault_file = os.path.join(
-        get_data_dir(),
-        'vault_dir.txt'
-    )
-    with open(vault_file, 'r') as f:
-        return f.readline().strip()
+from network_saver.utility import get_vault_dir
 
 
 def conform_network_context(context):
@@ -114,23 +100,35 @@ class NetSaveDialog(QtWidgets.QWidget):
 
         config_file = os.path.join(vault_dir, user, config_name)
 
-        with open(config_file, 'w') as config_f:
+        if not os.path.isfile(config_file):
+            with open(config_file, 'x') as config_f:
+                json.dump(dict(), config_f)
+
+        with open(config_file, 'r') as config_f:
             try:
                 data = json.load(config_f)
-            except:  # TODO: cast a smaller net, maybe
+            except (Exception, io.UnsupportedOperation) as err:  # TODO: cast a smaller net, maybe
                 data = dict()
+                print('Warning: Could not load config json at ', config_file)
+                print(err)
 
-            data.update(
-                {
-                    network_name: {
-                        'context': context,
-                        'notes': network_description,
-                        'version': version
-                    }
+        data.update(
+            {
+                network_name: {
+                    'context': context,
+                    'notes': network_description,
+                    'version': version
                 }
-            )
+            }
+        )
+
+        with open(config_file, 'w') as config_f:
             json.dump(data, config_f)
-        print('save successful')
+
+        QtWidgets.QMessageBox.information(self,
+            "Success", "Successfully saved network!"
+        )
+        self.close()
 
 
 def launch():
