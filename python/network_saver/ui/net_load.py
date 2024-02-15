@@ -1,5 +1,6 @@
 """Contains a GUI allowing a user to load their saved networks into Houdini."""
 
+import io
 import os
 from getpass import getuser
 import json
@@ -27,7 +28,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.table_model.setHorizontalHeaderLabels(
             ['Name', 'Houdini Version', 'Context', 'Description']
         )
-        # self.table_view.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.table_view.horizontalHeader().setMaximumHeight(25)
         self.table_view.verticalHeader().setVisible(False)
@@ -103,7 +104,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         with open(config_file, 'r') as config_f:
             try:
                 data = json.load(config_f)
-            except Exception as err:  # TODO: cast a smaller yet, maybe
+            except (Exception, io.UnsupportedOperation) as err:
                 data = dict()
                 print('Warning: Could not load config json at ', config_file)
                 print(err)
