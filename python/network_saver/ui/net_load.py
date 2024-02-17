@@ -74,6 +74,8 @@ class NetLoadDialog(QtWidgets.QWidget):
         name = indexes[0].data(QtCore.Qt.UserRole)
         context = indexes[2].data(QtCore.Qt.UserRole)
 
+        # TODO: check if network is locked before pasting
+
         # validate context of current pane
         network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
         cur_network = network_pane.pwd()
@@ -82,7 +84,8 @@ class NetLoadDialog(QtWidgets.QWidget):
         if not network_context == context:
             QtWidgets.QMessageBox.critical(self,
                 "Error Loading Network", 
-                "Current context does not match selected network!"
+                "Current context does not match selected network!\n"
+                "Please navigate to the desired location in the network editor."
             )
             return
 
@@ -95,6 +98,14 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         # TODO: put a netbox around the resulting nodes?
         hou.pasteNodesFromClipboard(network_pane.pwd())
+
+        netbox = cur_network.createNetworkBox()
+        netbox.setName(name)
+        netbox.setComment(name)
+        netbox.setColor(hou.selectedNodes()[0].color())
+        for node in hou.selectedNodes():
+            netbox.addNode(node)
+        netbox.fitAroundContents()
 
         QtWidgets.QMessageBox.information(self,
             "Success", "Successfully loaded network!"

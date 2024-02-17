@@ -56,7 +56,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         user = getuser()
         config_name = "networks.json"
 
-        # TODO: validate network name so no weird characters fuck up the filesystem
+        # TODO: validate network name so no weird characters fuck up the filesystem (or netbox naming)
         network_name = self.title_edit.toPlainText()  # TODO: check if network with name already exists, notify user
         network_description = self.notes.toPlainText()
 
