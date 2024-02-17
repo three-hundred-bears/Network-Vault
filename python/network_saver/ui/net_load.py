@@ -10,7 +10,7 @@ import hou
 
 from PySide2 import QtWidgets, QtCore, QtGui
 
-from network_saver.utility import get_vault_dir
+from network_saver.utility import get_vault_dir, get_child_context
 
 
 class NetLoadDialog(QtWidgets.QWidget):
@@ -73,20 +73,39 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         name = indexes[0].data(QtCore.Qt.UserRole)
         context = indexes[2].data(QtCore.Qt.UserRole)
-        print('got ', name, ' of context ', context)
+
+        # TODO: check if network is locked before pasting
+
+        # validate context of current pane
+        network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+        cur_network = network_pane.pwd()
+        network_context = get_child_context(cur_network)
+        print('node context: ', context, ' network context: ', network_context)
+        if not network_context == context:
+            QtWidgets.QMessageBox.critical(self,
+                "Error Loading Network", 
+                "Current context does not match selected network!\n"
+                "Please navigate to the desired location in the network editor."
+            )
+            return
 
         dst_file = '_'.join((context, 'copy.cpio'))
         dst = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), dst_file)
         src = os.path.join(vault_dir, user, name + '.cpio')
 
-        # TODO: validate network pane to ensure it matches context of loaded network
-
         shutil.copy(src, dst)
 
-        network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
 
         # TODO: put a netbox around the resulting nodes?
         hou.pasteNodesFromClipboard(network_pane.pwd())
+
+        netbox = cur_network.createNetworkBox()
+        netbox.setName(name)
+        netbox.setComment(name)
+        netbox.setColor(hou.selectedNodes()[0].color())
+        for node in hou.selectedNodes():
+            netbox.addNode(node)
+        netbox.fitAroundContents()
 
         QtWidgets.QMessageBox.information(self,
             "Success", "Successfully loaded network!"

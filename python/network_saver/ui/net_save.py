@@ -9,39 +9,7 @@ import shutil
 from PySide2 import QtCore, QtWidgets
 import hou
 
-from network_saver.utility import get_vault_dir
-
-
-def conform_network_context(context):
-    map = {
-        'Shop': 'SHOP',
-        'CopNet': 'IMG',
-        'Cop2': 'COP2',
-        'ChopNet': 'CHOPNET',
-        'Chop': 'CHOP',
-        'Object': 'OBJ',
-        'Driver': 'ROP', 
-        'Sop': 'SOP',
-        'Vop': 'VOP',
-        'Lop': 'LOP',
-        'TopNet': 'TOPNET',
-        'Top': 'TOP',
-        'Dop': 'DOP'
-    }
-    conformed_context = map.get(context)
-    if not conformed_context:
-        raise RuntimeError(
-            'Unsupported context?!\n'
-            'Please send me a message telling me to account for {}'.format(context)
-            )
-    return conformed_context
-
-
-def get_network_context(network):
-
-    node_category = network[0].type().category().name()
-    return node_category
-    
+from network_saver.utility import get_vault_dir, get_network_context
 
 
 class NetSaveDialog(QtWidgets.QWidget):
@@ -81,14 +49,14 @@ class NetSaveDialog(QtWidgets.QWidget):
 
         hou.copyNodesToClipboard(selection)
 
-        context = conform_network_context(get_network_context(selection))
+        context = get_network_context(selection)
         version = hou.applicationVersionString()
 
         vault_dir = get_vault_dir()
         user = getuser()
         config_name = "networks.json"
 
-        # TODO: validate network name so no weird characters fuck up the filesystem
+        # TODO: validate network name so no weird characters fuck up the filesystem (or netbox naming)
         network_name = self.title_edit.toPlainText()  # TODO: check if network with name already exists, notify user
         network_description = self.notes.toPlainText()
 
@@ -107,7 +75,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         with open(config_file, 'r') as config_f:
             try:
                 data = json.load(config_f)
-            except (Exception, io.UnsupportedOperation) as err:  # TODO: cast a smaller net, maybe
+            except (Exception, io.UnsupportedOperation) as err:
                 data = dict()
                 print('Warning: Could not load config json at ', config_file)
                 print(err)
