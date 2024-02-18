@@ -4,6 +4,7 @@ import io
 import os
 from getpass import getuser
 import json
+import re
 import shutil
 
 from PySide2 import QtCore, QtWidgets
@@ -47,18 +48,25 @@ class NetSaveDialog(QtWidgets.QWidget):
             hou.ui.displayMessage("No nodes selected!", severity=hou.severityType.Warning)
             return
 
-        hou.copyNodesToClipboard(selection)
-
-        context = get_node_context(selection[0])
-        version = hou.applicationVersionString()
-
         vault_dir = get_vault_dir()
         user = getuser()
         config_name = "networks.json"
 
-        # TODO: validate network name so no weird characters fuck up the filesystem (or netbox naming)
         network_name = self.title_edit.toPlainText()  # TODO: check if network with name already exists, notify user
         network_description = self.notes.toPlainText()
+
+        if not re.match(r'^[a-zA-Z0-9_ ]+$', network_name):
+            hou.ui.displayMessage(
+                "Please make ensure network name is alphanumeric!\n"
+                "(only numbers, letters, spaces, or underscores)",
+                severity=hou.severityType.Warning
+            )
+            return
+
+        hou.copyNodesToClipboard(selection)
+
+        context = get_node_context(selection[0])
+        version = hou.applicationVersionString()
 
         src_file = '_'.join((context, 'copy.cpio'))
         src = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), src_file)
