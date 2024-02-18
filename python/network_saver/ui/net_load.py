@@ -129,13 +129,13 @@ class NetLoadDialog(QtWidgets.QWidget):
             name, context = self._get_network_data()
             network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
             cur_network = network_pane.pwd()
-            self._validate_network_context(cur_network, context)
+            self._validate_network_editor(cur_network, context)
         except RuntimeError:
             return
 
         self._paste_selected_network(name, context, network_pane)
 
-        self._wrap_selection_in_netbox(self, name, cur_network)
+        self._wrap_selection_in_netbox(name, cur_network)
 
         QtWidgets.QMessageBox.information(self,
             "Success", "Successfully loaded network!"
