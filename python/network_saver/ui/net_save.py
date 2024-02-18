@@ -9,7 +9,7 @@ import shutil
 from PySide2 import QtCore, QtWidgets
 import hou
 
-from network_saver.utility import get_vault_dir, get_network_context
+from network_saver.utility import get_vault_dir, get_node_context
 
 
 class NetSaveDialog(QtWidgets.QWidget):
@@ -49,7 +49,7 @@ class NetSaveDialog(QtWidgets.QWidget):
 
         hou.copyNodesToClipboard(selection)
 
-        context = get_network_context(selection)
+        context = get_node_context(selection[0])
         version = hou.applicationVersionString()
 
         vault_dir = get_vault_dir()
