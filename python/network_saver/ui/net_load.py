@@ -16,6 +16,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         super(NetLoadDialog, self).__init__(parent)
 
         # TODO: add support for browsing networks of other users
+        # TODO: add ability to remove network
 
         self.setWindowTitle('Load Selected Network')
 
@@ -162,10 +163,8 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.table_model.setRowCount(0)
 
         vault_file = network_saver.utility.get_vault_file()
-        try:
-            data = network_saver.utility.read_network_vault(vault_file, 'r')
-        except RuntimeError:
-            self.close()
+
+        data = network_saver.utility.read_network_vault(vault_file, 'r')
 
         if not data:
             hou.ui.displayMessage(
@@ -183,6 +182,10 @@ class NetLoadDialog(QtWidgets.QWidget):
 
 def launch():
 
-    widget = NetLoadDialog()
+    try:
+        widget = NetLoadDialog()
+    except RuntimeError as err:
+        print("Failed to open NetLoad dialog:\n{}".format(err))
+        return
     widget.setParent(hou.qt.mainWindow(), QtCore.Qt.Window)
     widget.show()

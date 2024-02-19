@@ -1,4 +1,5 @@
 
+from getpass import getuser
 import io
 import json
 import os
@@ -91,9 +92,10 @@ def read_network_vault(filepath, mode):
         func(filepath)
         return dict()
     try:
-        data = json.load(config_f)
+        with open(filepath, 'r') as config_f:
+            data = json.load(config_f)
     except (Exception, io.UnsupportedOperation) as err:
         data = dict()
-        print('Warning: Could not load config json at ', config_file)
+        print('Warning: Could not load config json at ', filepath)
         print(err)
     return data

@@ -1,6 +1,5 @@
 """Contains a GUI allowing a user to save their Houdini network to disk."""
 
-import io
 import os
 from getpass import getuser
 import json
@@ -96,7 +95,7 @@ class NetSaveDialog(QtWidgets.QWidget):
     def save_network(self):
 
         try:
-            selection = hou.selectedNodes()
+            selection = self._get_selected_nodes()
         except RuntimeError:
             return
 
@@ -127,7 +126,9 @@ class NetSaveDialog(QtWidgets.QWidget):
 
 def launch():
 
-    widget = NetSaveDialog()
+    try:
+        widget = NetSaveDialog()
+    except RuntimeError as err:
+        print("Failed to open NetSave dialog:\n{}".format(err))
     widget.setParent(hou.qt.mainWindow(), QtCore.Qt.Window)
-
     widget.show()
