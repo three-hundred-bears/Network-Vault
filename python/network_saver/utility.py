@@ -48,6 +48,14 @@ def get_vault_dir():
         return f.readline().strip()
 
 
+def get_vault_file():
+
+    vault_dir = get_vault_dir()
+    user = getuser()
+    vault_name = "networks.json"
+    return os.path.join(vault_dir, user, vault_name)
+
+
 def get_node_context(node):
     return _remap_node_categories(node.type().category().name())
 
@@ -57,6 +65,7 @@ def get_network_context(node):
     if not category:
         return get_node_context(node)
     return _remap_node_categories(category.name())
+
 
 def _make(config_file):
     with open(config_file, 'x') as config_f:
@@ -72,6 +81,7 @@ def _notify(config_file):
         "Network vault file {} does not exist".format(config_file)
     )
 
+
 def read_network_vault(filepath, mode):
     func_map = {'r': _notify, 'w': _make}
     func = func_map.get(mode)
@@ -79,6 +89,7 @@ def read_network_vault(filepath, mode):
         raise ValueError("Invalid filemode {}".format(mode))
     if not os.path.isfile(filepath):
         func(filepath)
+        return dict()
     try:
         data = json.load(config_f)
     except (Exception, io.UnsupportedOperation) as err:

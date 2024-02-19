@@ -1,16 +1,14 @@
 """Contains a GUI allowing a user to load their saved networks into Houdini."""
 
-import io
 import os
 from getpass import getuser
-import json
 import shutil
 
 import hou
 
 from PySide2 import QtWidgets, QtCore, QtGui
 
-from network_saver.utility import get_vault_dir, get_network_context
+import network_saver.utility
 
 
 class NetLoadDialog(QtWidgets.QWidget):
@@ -67,8 +65,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         indexes = self.table_view.selectionModel().selectedIndexes()
         if not indexes:
-            QtWidgets.QMessageBox.critical(self,
-                "Error Loading Network", "No network selected!"
+            hou.ui.displayMessage(
+                "No network selected!",
+                severity=hou.severityType.Error
             )
             raise RuntimeError("No network selected")
 
@@ -85,26 +84,29 @@ class NetLoadDialog(QtWidgets.QWidget):
     def _validate_network_editor(self, current_network, expected_context):
 
         if not current_network.isEditable():
-            QtWidgets.QMessageBox.critical(self,
-                "Error Loading Network", "Cannot load into a locked editor!"
+            hou.ui.displayMessage(
+                "Cannot load into a locked editor!",
+                severity=hou.severityType.Error
             )
             raise RuntimeError("Current network editor is locked")
 
-        network_context = get_network_context(current_network)
+        network_context = network_saver.utility.get_network_context(
+            current_network
+        )
 
         if not network_context == expected_context:
-            QtWidgets.QMessageBox.critical(self,
-                "Error Loading Network", 
+            hou.ui.displayMessage(
                 "Current context does not match selected network!\n"
-                "Please navigate to the desired location in the network editor."
+                "Navigate to the desired location in the network editor.",
+                severity=hou.severityType.Error
             )
             raise RuntimeError(
                 "Network editor category does not match network category"
             )
-    
+
     def _paste_selected_network(self, name, context, network_pane):
 
-        vault_dir = get_vault_dir()
+        vault_dir = network_saver.utility.get_vault_dir()
         user = getuser()
         dst_file = '_'.join((context, 'copy.cpio'))
         dst = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), dst_file)
@@ -137,8 +139,8 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self._wrap_selection_in_netbox(name, cur_network)
 
-        QtWidgets.QMessageBox.information(self,
-            "Success", "Successfully loaded network!"
+        hou.ui.displayMessage(
+            "Successfully loaded network!"
         )
         self.close()
 
@@ -159,27 +161,19 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.table_model.setRowCount(0)
 
-        vault_dir = get_vault_dir()
-        user = getuser()
-        config_name = "networks.json"
-        # TODO: what happens if it's not there, or if it's there but empty?
-        config_file = os.path.join(vault_dir, user, config_name)
-
-        if not os.path.isfile(config_file):
-            QtWidgets.QMessageBox.critical(self,
-                "Error Loading Network", 
-                "No networks available to load!\n"
-                "Please first save a network using the network saver tool."                               
-            )
+        vault_file = network_saver.utility.get_vault_file()
+        try:
+            data = network_saver.utility.read_network_vault(vault_file, 'r')
+        except RuntimeError:
             self.close()
 
-        with open(config_file, 'r') as config_f:
-            try:
-                data = json.load(config_f)
-            except (Exception, io.UnsupportedOperation) as err:
-                data = dict()
-                print('Warning: Could not load config json at ', config_file)
-                print(err)
+        if not data:
+            hou.ui.displayMessage(
+                "No networks available to load!\n"
+                "Please first save a network using the network saver tool.",
+                severity=hou.severityType.Error
+            )
+            self.close()  # TODO: does this work if we haven't called show() yet?
 
         for name, meta in data.items():
             self._append_network_row(name, meta)
