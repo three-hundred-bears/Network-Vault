@@ -61,7 +61,7 @@ class NetSaveDialog(QtWidgets.QWidget):
                 severity=hou.severityType.Warning
             )
             raise RuntimeError("Invalid network name")
-        if network_name in data.keys() and not hou.displayConfirmation(
+        if network_name in data.keys() and not hou.ui.displayConfirmation(
             "Network with this name already exists!\n"
             "Would you like to replace it?"
         ):
@@ -70,6 +70,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         return network_name
     
     def _move_network_file(self, vault_dir, context, user, network_name):
+
         src_file = '_'.join((context, 'copy.cpio'))
         src = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), src_file)
         dst = os.path.join(vault_dir, user, network_name + '.cpio')
@@ -130,5 +131,6 @@ def launch():
         widget = NetSaveDialog()
     except RuntimeError as err:
         print("Failed to open NetSave dialog:\n{}".format(err))
+        return
     widget.setParent(hou.qt.mainWindow(), QtCore.Qt.Window)
     widget.show()
