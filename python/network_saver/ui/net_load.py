@@ -1,5 +1,6 @@
 """Contains a GUI allowing a user to load their saved networks into Houdini."""
 
+import json
 import os
 from getpass import getuser
 import shutil
@@ -21,6 +22,11 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.setWindowTitle('Load Selected Network')
 
         vbox = QtWidgets.QVBoxLayout()
+
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.addStretch()
+        self.remove_button = QtWidgets.QPushButton('Remove Network', self)
+        hbox.addWidget(self.remove_button)
 
         self.table_model = QtGui.QStandardItemModel()
         self.table_view = QtWidgets.QTableView()
@@ -47,14 +53,16 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.table_view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.table_view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
-        self.load_button = QtWidgets.QPushButton('Ok', self)
+        self.load_button = QtWidgets.QPushButton('Load Network', self)
 
+        vbox.addLayout(hbox)
         vbox.addWidget(self.table_view)
         vbox.addWidget(self.load_button)
 
         self.setLayout(vbox)
 
         self.load_button.clicked.connect(self.load_network)
+        self.remove_button.clicked.connect(self.remove_network)
 
         self.refresh_networks()
 
@@ -145,6 +153,36 @@ class NetLoadDialog(QtWidgets.QWidget):
         )
         self.close()
 
+    def remove_network(self):
+
+        try:
+            name, _context = self._get_network_data()
+        except RuntimeError:
+            return
+
+        if not hou.ui.displayConfirmation(
+            "Are you sure you want to remove this network?", 
+            severity=hou.severityType.Warning
+        ):
+            return
+
+        vault_file = network_saver.utility.get_vault_file()
+        data = network_saver.utility.read_network_vault(vault_file, 'r')
+
+        try:
+            data.pop(name)
+        except KeyError:
+            # assume it's already gone somehow, which we want anyway
+            pass
+        with open(vault_file, 'w') as vault_f:
+            json.dump(data, vault_f)
+
+        try:
+            self.refresh_networks()
+        except RuntimeError:
+            self.close()
+
+
     def _append_network_row(self, network_name, network_data):
 
         name_item = QtGui.QStandardItem(network_name)
@@ -155,6 +193,8 @@ class NetLoadDialog(QtWidgets.QWidget):
         notes_item = QtGui.QStandardItem(network_data['notes'])
 
         row = [name_item, version_item, context_item, notes_item]
+        for item in row:
+            item.setEditable(False)
 
         self.table_model.appendRow(row)
 
@@ -172,7 +212,7 @@ class NetLoadDialog(QtWidgets.QWidget):
                 "Please first save a network using the network saver tool.",
                 severity=hou.severityType.Error
             )
-            self.close()  # TODO: does this work if we haven't called show() yet?
+            raise RuntimeError("Network vault empty")
 
         for name, meta in data.items():
             self._append_network_row(name, meta)
