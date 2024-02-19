@@ -10,7 +10,7 @@ import shutil
 from PySide2 import QtCore, QtWidgets
 import hou
 
-from network_saver.utility import get_vault_dir, get_node_context
+import network_saver.utility
 
 
 class NetSaveDialog(QtWidgets.QWidget):
@@ -48,7 +48,7 @@ class NetSaveDialog(QtWidgets.QWidget):
             hou.ui.displayMessage("No nodes selected!", severity=hou.severityType.Warning)
             return
 
-        vault_dir = get_vault_dir()
+        vault_dir = network_saver.utility.get_vault_dir()
         user = getuser()
         config_name = "networks.json"
 
@@ -65,7 +65,7 @@ class NetSaveDialog(QtWidgets.QWidget):
 
         hou.copyNodesToClipboard(selection)
 
-        context = get_node_context(selection[0])
+        context = network_saver.utility.get_node_context(selection[0])
         version = hou.applicationVersionString()
 
         src_file = '_'.join((context, 'copy.cpio'))
@@ -75,18 +75,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         shutil.copy(src, dst)
 
         config_file = os.path.join(vault_dir, user, config_name)
-
-        if not os.path.isfile(config_file):
-            with open(config_file, 'x') as config_f:
-                json.dump(dict(), config_f)
-
-        with open(config_file, 'r') as config_f:
-            try:
-                data = json.load(config_f)
-            except (Exception, io.UnsupportedOperation) as err:
-                data = dict()
-                print('Warning: Could not load config json at ', config_file)
-                print(err)
+        data = network_saver.utility.read_network_vault(config_file, 'w')
 
         data.update(
             {
@@ -97,7 +86,6 @@ class NetSaveDialog(QtWidgets.QWidget):
                 }
             }
         )
-
         with open(config_file, 'w') as config_f:
             json.dump(data, config_f)
 
