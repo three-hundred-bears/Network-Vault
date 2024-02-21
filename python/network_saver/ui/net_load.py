@@ -67,17 +67,30 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.setLayout(vbox)
 
-        self.load_button.clicked.connect(self.load_network)
-        self.remove_button.clicked.connect(self.remove_network)
-
         self.refresh_networks()
         self.populate_users()
+        self.set_current_user()
+
+        self.load_button.clicked.connect(self.load_network)
+        self.remove_button.clicked.connect(self.remove_network)
+        self.user_combobox.currentIndexChanged.connect(self.handle_user_change)
 
     def sizeHint(self):
 
         return QtCore.QSize(700, 250)
 
+    def handle_user_change(self):
+        self.user = self.user_combobox.currentText()
+        self.refresh_networks()
+
+    def set_current_user(self):
+        index = self.user_combobox.findText(self.user)
+        if index == -1:
+            return
+        self.user_combobox.setCurrentIndex(index)
+
     def _validate_user_dir(self, folder):
+
         full_path = os.path.join(self.vault_dir, folder)
         if not os.path.isdir(full_path):
             return False
@@ -87,12 +100,11 @@ class NetLoadDialog(QtWidgets.QWidget):
         return True
 
     def populate_users(self):
+
         dirs = []
         for folder in os.listdir(self.vault_dir):
             dirs.append(folder)
-        print('got dirs ', dirs)
         user_dirs = filter(self._validate_user_dir, dirs)
-        print('got user dirs ', user_dirs)
         self.user_combobox.addItems(user_dirs)
 
     def _get_current_selection(self):
@@ -225,9 +237,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.table_model.setRowCount(0)
 
-        vault_file = network_saver.utility.get_vault_file()
+        vault_file = network_saver.utility.get_vault_file(user=self.user)
 
-        data = network_saver.utility.read_network_vault(vault_file, 'r')
+        data = network_saver.utility.read_network_vault(vault_file, 'r', user=self.user)
 
         if not data:
             hou.ui.displayMessage(
