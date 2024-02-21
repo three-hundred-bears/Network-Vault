@@ -16,14 +16,20 @@ class NetLoadDialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(NetLoadDialog, self).__init__(parent)
 
-        # TODO: add support for browsing networks of other users
-        # TODO: add ability to remove network
-
         self.setWindowTitle('Load Selected Network')
+
+        self.vault_dir = network_saver.utility.get_vault_dir()
+        self.user = getuser()
 
         vbox = QtWidgets.QVBoxLayout()
 
         hbox = QtWidgets.QHBoxLayout()
+
+        user_label = QtWidgets.QLabel(self)
+        user_label.setText('User:')
+        self.user_combobox = QtWidgets.QComboBox(self)
+        hbox.addWidget(user_label)
+        hbox.addWidget(self.user_combobox)
         hbox.addStretch()
         self.remove_button = QtWidgets.QPushButton('Remove Network', self)
         hbox.addWidget(self.remove_button)
@@ -61,14 +67,45 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.setLayout(vbox)
 
+        self.refresh_networks()
+        self.populate_users()
+        self.set_current_user()
+
         self.load_button.clicked.connect(self.load_network)
         self.remove_button.clicked.connect(self.remove_network)
-
-        self.refresh_networks()
+        self.user_combobox.currentIndexChanged.connect(self.handle_user_change)
 
     def sizeHint(self):
 
         return QtCore.QSize(700, 250)
+
+    def handle_user_change(self):
+        self.user = self.user_combobox.currentText()
+        self.refresh_networks()
+
+    def set_current_user(self):
+        index = self.user_combobox.findText(self.user)
+        if index == -1:
+            return
+        self.user_combobox.setCurrentIndex(index)
+
+    def _validate_user_dir(self, folder):
+
+        full_path = os.path.join(self.vault_dir, folder)
+        if not os.path.isdir(full_path):
+            return False
+        children = os.listdir(full_path)
+        if "networks.json" not in children:
+            return False
+        return True
+
+    def populate_users(self):
+
+        dirs = []
+        for folder in os.listdir(self.vault_dir):
+            dirs.append(folder)
+        user_dirs = filter(self._validate_user_dir, dirs)
+        self.user_combobox.addItems(user_dirs)
 
     def _get_current_selection(self):
 
@@ -115,11 +152,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
     def _paste_selected_network(self, name, context, network_pane):
 
-        vault_dir = network_saver.utility.get_vault_dir()
-        user = getuser()
         dst_file = '_'.join((context, 'copy.cpio'))
         dst = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), dst_file)
-        src = os.path.join(vault_dir, user, name + '.cpio')
+        src = os.path.join(self.vault_dir, self.user, name + '.cpio')
         shutil.copy(src, dst)
 
         hou.pasteNodesFromClipboard(network_pane.pwd())
@@ -202,9 +237,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.table_model.setRowCount(0)
 
-        vault_file = network_saver.utility.get_vault_file()
+        vault_file = network_saver.utility.get_vault_file(user=self.user)
 
-        data = network_saver.utility.read_network_vault(vault_file, 'r')
+        data = network_saver.utility.read_network_vault(vault_file, 'r', user=self.user)
 
         if not data:
             hou.ui.displayMessage(

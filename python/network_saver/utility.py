@@ -35,7 +35,8 @@ def _remap_node_categories(category_name):
     return conformed_cat
 
 
-def get_data_dir():  
+def get_data_dir():
+
     cur_dir = Path(__file__)
     return os.path.join(cur_dir.parents[2], 'data')
 
@@ -49,10 +50,10 @@ def get_vault_dir():
         return f.readline().strip()
 
 
-def get_vault_file():
+def get_vault_file(user=None):
 
     vault_dir = get_vault_dir()
-    user = getuser()
+    user = user or getuser()
     vault_name = "networks.json"
     return os.path.join(vault_dir, user, vault_name)
 
@@ -68,12 +69,15 @@ def get_network_context(node):
     return _remap_node_categories(category.name())
 
 
-def _make(config_file):
+def _make(config_file, user):
+    user_dir = os.path.join(get_vault_dir(), user)
+    if not os.path.exists(user_dir) and not os.path.isdir(user_dir):
+        os.mkdir(user_dir)  # TODO: change mode so only user has perms
     with open(config_file, 'x') as config_f:
         json.dump(dict(), config_f)
 
 
-def _notify(config_file):
+def _notify(config_file, _user):
     hou.ui.displayMessage(
         "No networks available to load!\n"
         "Please first save a network using the network saver tool."
@@ -83,13 +87,14 @@ def _notify(config_file):
     )
 
 
-def read_network_vault(filepath, mode):
+def read_network_vault(filepath, mode, user=None):
+    user = user or getuser()
     func_map = {'r': _notify, 'w': _make}
     func = func_map.get(mode)
     if not func:
         raise ValueError("Invalid filemode {}".format(mode))
     if not os.path.isfile(filepath):
-        func(filepath)
+        func(filepath, user)
         return dict()
     try:
         with open(filepath, 'r') as config_f:

@@ -67,7 +67,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         ):
             raise RuntimeError("Operation aborted")
 
-        return network_name
+        return network_name.replace(" ", "_")
     
     def _move_network_file(self, vault_dir, context, user, network_name):
 
