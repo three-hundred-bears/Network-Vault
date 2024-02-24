@@ -13,6 +13,7 @@ import network_saver.utility
 
 
 class NetSaveDialog(QtWidgets.QWidget):
+    """GUI allowing user to save selected networks to be loaded later."""
     def __init__(self, parent=None):
         super(NetSaveDialog, self).__init__(parent)
 
@@ -38,10 +39,12 @@ class NetSaveDialog(QtWidgets.QWidget):
         self.save_button.clicked.connect(self.save_network)
 
     def sizeHint(self):
+        """GUI dimensions."""
 
         return QtCore.QSize(400, 100)
     
     def _get_selected_nodes(self):
+        """Fetch currently selected nodes."""
 
         selection = hou.selectedNodes()
         if not selection:
@@ -52,6 +55,11 @@ class NetSaveDialog(QtWidgets.QWidget):
         return selection
     
     def _get_network_name(self, data):
+        """Fetch and validate given network name from GUI.
+        
+        Args:
+            data dict: Map of currently saved networks to their relevant data.
+        """
 
         network_name = self.title_edit.toPlainText()
         if not re.match(r'^[a-zA-Z0-9_ ]+$', network_name):
@@ -70,6 +78,14 @@ class NetSaveDialog(QtWidgets.QWidget):
         return network_name.replace(" ", "_")
     
     def _move_network_file(self, vault_dir, context, user, network_name):
+        """Copy currently stored CPIO file to vault directory.
+        
+        Args:
+            vault_dir string: Path-like object representing "vault" directory.
+            context string: Category of current network file.
+            user string: Current user.
+            network_name string: Given name of network being copied.
+        """
 
         src_file = '_'.join((context, 'copy.cpio'))
         src = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), src_file)
@@ -78,6 +94,12 @@ class NetSaveDialog(QtWidgets.QWidget):
 
 
     def _get_network_data(self, selection):
+        """Compile relevant data on current network.
+        
+        Args:
+            selection tuple: Collection of hou.Node objects representing
+                             currently selected network.
+        """
 
         notes = self.notes.toPlainText()
         context = network_saver.utility.get_node_context(selection[0])
@@ -87,6 +109,15 @@ class NetSaveDialog(QtWidgets.QWidget):
 
     def _write_network_data(
             self, config_file, data, network_name, network_data):
+        """Update network json with data associated with current network.
+        
+        Args:
+            config_file string: Path-like object representing config file to 
+                                save to.
+            data dict: Map of previously saved networks to their relevant data.
+            network_name string: Name of network currently being saved.
+            network_data dict: Map of name of network to its relevant data.
+        """
 
         data.update({network_name: network_data})
         with open(config_file, 'w') as config_f:
@@ -94,6 +125,7 @@ class NetSaveDialog(QtWidgets.QWidget):
 
 
     def save_network(self):
+        """Save network currently selected in GUI to json located on disk."""
 
         try:
             selection = self._get_selected_nodes()
@@ -126,6 +158,7 @@ class NetSaveDialog(QtWidgets.QWidget):
 
 
 def launch():
+    """Launch GUI, parenting to Houdini main window."""
 
     try:
         widget = NetSaveDialog()

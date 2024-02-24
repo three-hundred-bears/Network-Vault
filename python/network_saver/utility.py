@@ -9,6 +9,13 @@ import hou
 
 
 def _remap_node_categories(category_name):
+    """Remap node type categories to naming convention used by CPIO files.
+    
+    Copying a node (or nodes) in Houdini creates a temporary CPIO file in
+    $HOUDINI_TEMP_DIR, prefixed with the category of the network it was 
+    copied from. This func remaps the name of the categories given by
+    hou.NodeTypeCategory.name() to the convention used for these CPIO files.
+    """
 
     map = {
         'Shop': 'SHOP',
@@ -36,12 +43,15 @@ def _remap_node_categories(category_name):
 
 
 def get_data_dir():
+    """Fetch directory containing module data."""
 
     cur_dir = Path(__file__)
     return os.path.join(cur_dir.parents[2], 'data')
 
 
 def get_vault_dir():
+    """Fetch vault directory from text file containing it."""
+
     vault_file = os.path.join(
         get_data_dir(),
         'vault_dir.txt'
@@ -51,6 +61,11 @@ def get_vault_dir():
 
 
 def get_vault_file(user=None):
+    """Fetch vault json file for given user.
+    
+    Args:
+        user string: User determining which vault file to fetch.
+    """
 
     vault_dir = get_vault_dir()
     user = user or getuser()
@@ -59,10 +74,22 @@ def get_vault_file(user=None):
 
 
 def get_node_context(node):
+    """Get network category of given node.
+    
+    Args:
+        node hou.Node: Node to fetch category for.
+    """
+
     return _remap_node_categories(node.type().category().name())
 
 
 def get_network_context(node):
+    """Get child network category of given node.
+    
+    Args:
+        node hou.Node: Node to fetch child category for.
+    """
+
     category = node.type().childTypeCategory()
     if not category:
         return get_node_context(node)
@@ -70,6 +97,13 @@ def get_network_context(node):
 
 
 def _make(config_file, user):
+    """Create vault json for given user.
+    
+    Args:
+        config_file string: Path-like object representing file to make.
+        user string: User to create json file under.
+    """
+
     user_dir = os.path.join(get_vault_dir(), user)
     if not os.path.exists(user_dir) and not os.path.isdir(user_dir):
         os.mkdir(user_dir)  # TODO: change mode so only user has perms
@@ -78,6 +112,13 @@ def _make(config_file, user):
 
 
 def _notify(config_file, _user):
+    """Notify user that no vault json currently exists.
+    
+    Args:
+        config_file string: Path-like object representing vault json that
+                            should exist but doesn't.
+    """
+
     hou.ui.displayMessage(
         "No networks available to load!\n"
         "Please first save a network using the network saver tool."
@@ -88,6 +129,15 @@ def _notify(config_file, _user):
 
 
 def read_network_vault(filepath, mode, user=None):
+    """Read contents of vault json to dict.
+    
+    Args:
+        filepath string: Path-like object representing vault json to read.
+        mode string: Determines how to react in the event that the file does
+                     not exist.
+        user string: User to read vault json from.
+    """
+
     user = user or getuser()
     func_map = {'r': _notify, 'w': _make}
     func = func_map.get(mode)

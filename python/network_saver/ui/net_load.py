@@ -13,6 +13,7 @@ import network_saver.utility
 
 
 class NetLoadDialog(QtWidgets.QWidget):
+    """GUI allowing user to load saved networks into Houdini."""
     def __init__(self, parent=None):
         super(NetLoadDialog, self).__init__(parent)
 
@@ -22,7 +23,6 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.user = getuser()
 
         vbox = QtWidgets.QVBoxLayout()
-
         hbox = QtWidgets.QHBoxLayout()
 
         user_label = QtWidgets.QLabel(self)
@@ -69,27 +69,38 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.refresh_networks()
         self.populate_users()
-        self.set_current_user()
+        self._set_current_user()
 
         self.load_button.clicked.connect(self.load_network)
         self.remove_button.clicked.connect(self.remove_network)
         self.user_combobox.currentIndexChanged.connect(self.handle_user_change)
 
     def sizeHint(self):
+        """GUI dimensions."""
 
         return QtCore.QSize(700, 250)
 
     def handle_user_change(self):
+        """Update relevant fields based on current user selection."""
+
         self.user = self.user_combobox.currentText()
         self.refresh_networks()
 
-    def set_current_user(self):
+    def _set_current_user(self):
+        """Set user property to current user. Meant to run once during init."""
+
         index = self.user_combobox.findText(self.user)
         if index == -1:
             return
         self.user_combobox.setCurrentIndex(index)
 
     def _validate_user_dir(self, folder):
+        """Filter func to ensure user directory both exists and contains 
+           network json.
+
+        Args:
+            folder: string representing file/folder present in vault dir
+        """
 
         full_path = os.path.join(self.vault_dir, folder)
         if not os.path.isdir(full_path):
@@ -100,6 +111,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         return True
 
     def populate_users(self):
+        """Populate user combobox based on contents of vault dir."""
 
         dirs = []
         for folder in os.listdir(self.vault_dir):
@@ -108,6 +120,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.user_combobox.addItems(user_dirs)
 
     def _get_current_selection(self):
+        """Get currently selected network as row of indexes."""
 
         indexes = self.table_view.selectionModel().selectedIndexes()
         if not indexes:
@@ -120,6 +133,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         return indexes
 
     def _get_network_data(self):
+        """Fetch data associated with selected network."""
 
         indexes = self._get_current_selection()
         name = indexes[0].data(QtCore.Qt.UserRole)
@@ -128,6 +142,14 @@ class NetLoadDialog(QtWidgets.QWidget):
         return name, context
 
     def _validate_network_editor(self, current_network, expected_context):
+        """Ensure current network editor is same category as selected network.
+        
+        Args:
+            current_network hou.paneTabType.NetworkEditor: Current network 
+                                                            editor.
+            expected_context string: Representation of current network
+                                     category.
+        """
 
         if not current_network.isEditable():
             hou.ui.displayMessage(
@@ -151,6 +173,13 @@ class NetLoadDialog(QtWidgets.QWidget):
             )
 
     def _paste_selected_network(self, name, context, network_pane):
+        """Load selected network from clipboard.
+        
+        Args:
+            name string: name of selected network
+            context string: Representation of current network category.
+            network_pane hou.paneTabType.NetworkEditor: Current network editor.
+        """
 
         dst_file = '_'.join((context, 'copy.cpio'))
         dst = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), dst_file)
@@ -160,6 +189,12 @@ class NetLoadDialog(QtWidgets.QWidget):
         hou.pasteNodesFromClipboard(network_pane.pwd())
 
     def _wrap_selection_in_netbox(self, name, cur_network):
+        """Create netbox around recently created network.
+        
+        Args:
+            name string: Name of netbox.
+            cur_network hou.Node: Current network location.
+        """
 
         netbox = cur_network.createNetworkBox()
         netbox.setName(name)
@@ -170,6 +205,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         netbox.fitAroundContents()
 
     def load_network(self):
+        """Import selected network into active network editor pane."""
 
         try:
             name, context = self._get_network_data()
@@ -189,6 +225,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.close()
 
     def remove_network(self):
+        """Remove network from GUI."""
 
         try:
             name, _context = self._get_network_data()
@@ -219,6 +256,14 @@ class NetLoadDialog(QtWidgets.QWidget):
 
 
     def _append_network_row(self, network_name, network_data):
+        """Add network as row to GUI, with relevant data stored in associated
+           columns.
+        
+        Args:
+            network_name string: Name of network being added.
+            network_data dict: Map of relevant network data, including Houdini
+                               version, category, and description.
+        """
 
         name_item = QtGui.QStandardItem(network_name)
         name_item.setData(network_name, QtCore.Qt.UserRole)
@@ -234,6 +279,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.table_model.appendRow(row)
 
     def refresh_networks(self):
+        """Refresh networks displayed by GUI."""
 
         self.table_model.setRowCount(0)
 
@@ -256,6 +302,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
 
 def launch():
+    """Launch GUI, parenting to Houdini main window."""
 
     try:
         widget = NetLoadDialog()
