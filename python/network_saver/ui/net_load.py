@@ -143,10 +143,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
     def _validate_network_editor(self, current_network, expected_context):
         """Ensure current network editor is same category as selected network.
-        
+
         Args:
-            current_network hou.paneTabType.NetworkEditor: Current network 
-                                                            editor.
+            current_network hou.paneTab: Current network editor.
             expected_context string: Representation of current network
                                      category.
         """
@@ -174,7 +173,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
     def _paste_selected_network(self, name, context, network_pane):
         """Load selected network from clipboard.
-        
+
         Args:
             name string: name of selected network
             context string: Representation of current network category.
@@ -190,7 +189,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
     def _wrap_selection_in_netbox(self, name, cur_network):
         """Create netbox around recently created network.
-        
+
         Args:
             name string: Name of netbox.
             cur_network hou.Node: Current network location.
@@ -258,7 +257,7 @@ class NetLoadDialog(QtWidgets.QWidget):
     def _append_network_row(self, network_name, network_data):
         """Add network as row to GUI, with relevant data stored in associated
            columns.
-        
+
         Args:
             network_name string: Name of network being added.
             network_data dict: Map of relevant network data, including Houdini

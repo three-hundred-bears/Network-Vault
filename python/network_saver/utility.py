@@ -8,7 +8,7 @@ from pathlib import Path
 import hou
 
 
-def _remap_node_categories(category_name):
+def remap_node_categories(category_name):
     """Remap node type categories to naming convention used by CPIO files.
     
     Copying a node (or nodes) in Houdini creates a temporary CPIO file in
@@ -80,7 +80,7 @@ def get_node_context(node):
         node hou.Node: Node to fetch category for.
     """
 
-    return _remap_node_categories(node.type().category().name())
+    return remap_node_categories(node.type().category().name())
 
 
 def get_network_context(node):
@@ -93,7 +93,7 @@ def get_network_context(node):
     category = node.type().childTypeCategory()
     if not category:
         return get_node_context(node)
-    return _remap_node_categories(category.name())
+    return remap_node_categories(category.name())
 
 
 def _make(config_file, user):
