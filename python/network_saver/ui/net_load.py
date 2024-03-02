@@ -284,7 +284,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         vault_file = network_saver.utility.get_vault_file(user=self.user)
 
-        data = network_saver.utility.read_network_vault(vault_file, 'r', user=self.user)
+        data = network_saver.utility.read_network_vault(vault_file, 'r')
 
         if not data:
             hou.ui.displayMessage(

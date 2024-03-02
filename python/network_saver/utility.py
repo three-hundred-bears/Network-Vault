@@ -7,6 +7,22 @@ from pathlib import Path
 
 import hou
 
+CATEGORY_MAP = {
+    'Shop': 'SHOP',
+    'CopNet': 'IMG',
+    'Cop2': 'COP2',
+    'ChopNet': 'CHOPNET',
+    'Chop': 'CHOP',
+    'Object': 'OBJ',
+    'Driver': 'ROP', 
+    'Sop': 'SOP',
+    'Vop': 'VOP',
+    'Lop': 'LOP',
+    'TopNet': 'TOPNET',
+    'Top': 'TOP',
+    'Dop': 'DOP'
+}
+
 
 def remap_node_categories(category_name):
     """Remap node type categories to naming convention used by CPIO files.
@@ -17,22 +33,7 @@ def remap_node_categories(category_name):
     hou.NodeTypeCategory.name() to the convention used for these CPIO files.
     """
 
-    map = {
-        'Shop': 'SHOP',
-        'CopNet': 'IMG',
-        'Cop2': 'COP2',
-        'ChopNet': 'CHOPNET',
-        'Chop': 'CHOP',
-        'Object': 'OBJ',
-        'Driver': 'ROP', 
-        'Sop': 'SOP',
-        'Vop': 'VOP',
-        'Lop': 'LOP',
-        'TopNet': 'TOPNET',
-        'Top': 'TOP',
-        'Dop': 'DOP'
-    }
-    conformed_cat = map.get(category_name)
+    conformed_cat = CATEGORY_MAP.get(category_name)
     if not conformed_cat:
         raise RuntimeError(
             'Unsupported context?!\n'
@@ -60,17 +61,23 @@ def get_vault_dir():
         return f.readline().strip()
 
 
-def get_vault_file(user=None):
+def get_user_dir(user=None, vault_dir=None):
+
+    vault_dir = vault_dir or get_vault_dir()
+    user = user or getuser()
+    return os.path.join(vault_dir, user)
+
+
+def get_vault_file(user=None, vault_dir=None):
     """Fetch vault json file for given user.
-    
+
     Args:
         user string: User determining which vault file to fetch.
     """
 
-    vault_dir = get_vault_dir()
-    user = user or getuser()
+    user_dir = get_user_dir(user=user, vault_dir=vault_dir)
     vault_name = "networks.json"
-    return os.path.join(vault_dir, user, vault_name)
+    return os.path.join(user_dir, vault_name)
 
 
 def get_node_context(node):
@@ -96,7 +103,7 @@ def get_network_context(node):
     return remap_node_categories(category.name())
 
 
-def _make(config_file, user):
+def _make(config_file):
     """Create vault json for given user.
     
     Args:
@@ -104,14 +111,14 @@ def _make(config_file, user):
         user string: User to create json file under.
     """
 
-    user_dir = os.path.join(get_vault_dir(), user)
-    if not os.path.exists(user_dir) and not os.path.isdir(user_dir):
+    user_dir = os.path.basename(config_file)
+    if not os.path.isdir(user_dir):
         os.mkdir(user_dir)  # TODO: change mode so only user has perms
     with open(config_file, 'x') as config_f:
         json.dump(dict(), config_f)
 
 
-def _notify(config_file, _user):
+def _notify(config_file):
     """Notify user that no vault json currently exists.
     
     Args:
@@ -119,16 +126,17 @@ def _notify(config_file, _user):
                             should exist but doesn't.
     """
 
-    hou.ui.displayMessage(
-        "No networks available to load!\n"
-        "Please first save a network using the network saver tool."
-    )
+    if hou.isUIAvailable():
+        hou.ui.displayMessage(
+            "No networks available to load!\n"
+            "Please first save a network using the network saver tool."
+        )
     raise RuntimeError(
         "Network vault file {} does not exist".format(config_file)
     )
 
 
-def read_network_vault(filepath, mode, user=None):
+def read_network_vault(filepath, mode):
     """Read contents of vault json to dict.
     
     Args:
@@ -138,13 +146,17 @@ def read_network_vault(filepath, mode, user=None):
         user string: User to read vault json from.
     """
 
-    user = user or getuser()
+    if not os.path.splitext(filepath)[1] == ".json":
+        raise ValueError(
+            "Given filepath {} is not a valid json".format(filepath)
+            )
+
     func_map = {'r': _notify, 'w': _make}
     func = func_map.get(mode)
     if not func:
         raise ValueError("Invalid filemode {}".format(mode))
     if not os.path.isfile(filepath):
-        func(filepath, user)
+        func(filepath)
         return dict()
     try:
         with open(filepath, 'r') as config_f:
