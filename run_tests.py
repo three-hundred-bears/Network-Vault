@@ -1,5 +1,6 @@
 
 import os, sys, unittest
+import PySide2
 
 def enableHou():
 
@@ -21,6 +22,9 @@ def enableHou():
 
 if __name__ == "__main__":
     enableHou()
-    tests = unittest.defaultTestLoader.discover("tests")
     runner = unittest.TextTestRunner()
+    # int_tests = unittest.defaultTestLoader.discover("tests/integration")
+    tests = unittest.defaultTestLoader.discover("tests")
+    # runner.run(int_tests)
     runner.run(tests)
+

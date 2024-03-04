@@ -25,7 +25,7 @@ class TestRemapNodeCategories(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             remap_node_categories(data)
 
-
+# TODO: use fixtures for this and similar tests, rather than live data
 class TestGetVaultDir(unittest.TestCase):
 
     def test_get_data_dir(self):
@@ -109,7 +109,7 @@ class TestGetNetworkContext(unittest.TestCase):
 class TestReadNetworkVault(unittest.TestCase):
 
     @classmethod
-    def setUp(cls):
+    def setUpClass(cls):
         cls.user = "test"
         cls.fixture_dir = os.path.join(
             os.path.dirname(__file__),

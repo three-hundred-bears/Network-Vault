@@ -68,19 +68,19 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.setLayout(vbox)
 
         self.refresh_networks()
-        self.populate_users()
+        self._populate_users()
         self._set_current_user()
 
         self.load_button.clicked.connect(self.load_network)
         self.remove_button.clicked.connect(self.remove_network)
-        self.user_combobox.currentIndexChanged.connect(self.handle_user_change)
+        self.user_combobox.currentIndexChanged.connect(self._handle_user_change)
 
     def sizeHint(self):
         """GUI dimensions."""
 
         return QtCore.QSize(700, 250)
 
-    def handle_user_change(self):
+    def _handle_user_change(self):
         """Update relevant fields based on current user selection."""
 
         self.user = self.user_combobox.currentText()
@@ -110,7 +110,7 @@ class NetLoadDialog(QtWidgets.QWidget):
             return False
         return True
 
-    def populate_users(self):
+    def _populate_users(self):
         """Populate user combobox based on contents of vault dir."""
 
         dirs = []

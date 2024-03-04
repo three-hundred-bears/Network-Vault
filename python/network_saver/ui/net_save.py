@@ -14,10 +14,12 @@ import network_saver.utility
 
 class NetSaveDialog(QtWidgets.QWidget):
     """GUI allowing user to save selected networks to be loaded later."""
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, user=None):
         super(NetSaveDialog, self).__init__(parent)
 
         self.setWindowTitle('Save Selected Network')
+
+        self.user = user or getuser()
 
         form = QtWidgets.QFormLayout()
 
@@ -60,7 +62,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         Args:
             data dict: Map of currently saved networks to their relevant data.
         """
-
+        # TODO: split this into separate validation function, write test for validation
         network_name = self.title_edit.toPlainText()
         if not re.match(r'^[a-zA-Z0-9_ ]+$', network_name):
             hou.ui.displayMessage(
@@ -77,23 +79,22 @@ class NetSaveDialog(QtWidgets.QWidget):
 
         return network_name.replace(" ", "_")
     
-    def _move_network_file(self, vault_dir, context, user, network_name):
+    def _move_network_file(self, vault_dir, context, network_name):
         """Copy currently stored CPIO file to vault directory.
         
         Args:
             vault_dir string: Path-like object representing "vault" directory.
             context string: Category of current network file.
-            user string: Current user.
             network_name string: Given name of network being copied.
         """
 
         src_file = '_'.join((context, 'copy.cpio'))
         src = os.path.join(os.getenv('HOUDINI_TEMP_DIR'), src_file)
-        dst = os.path.join(vault_dir, user, network_name + '.cpio')
+        dst = os.path.join(vault_dir, self.user, network_name + '.cpio')
         shutil.copy(src, dst)
 
 
-    def _get_network_data(self, selection):
+    def get_network_data(self, selection):
         """Compile relevant data on current network.
         
         Args:
@@ -132,7 +133,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         except RuntimeError:
             return
 
-        vault_file = network_saver.utility.get_vault_file()
+        vault_file = network_saver.utility.get_vault_file(user=self.user)
         data = network_saver.utility.read_network_vault(vault_file, 'w')
 
         try:
@@ -140,20 +141,20 @@ class NetSaveDialog(QtWidgets.QWidget):
         except RuntimeError:
             return
 
-        network_data = self._get_network_data(selection)
+        network_data = self.get_network_data(selection)
 
         hou.copyNodesToClipboard(selection)  # <-- creates CPIO file
         vault_dir = network_saver.utility.get_vault_dir()
-        user = getuser()
         self._move_network_file(
-            vault_dir, network_data['context'], user, network_name
+            vault_dir, network_data['context'], network_name
         )
 
         self._write_network_data(vault_file, data, network_name, network_data)
 
-        hou.ui.displayMessage(
-            "Successfully saved network!"
-        )
+        if hou.isUIAvailable():
+            hou.ui.displayMessage(
+                "Successfully saved network!"
+            )
         self.close()
 
 
