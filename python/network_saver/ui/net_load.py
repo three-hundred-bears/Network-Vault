@@ -144,7 +144,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         return indexes
 
-    def _get_network_data(self):
+    def get_network_data(self):
         """Fetch data associated with selected network."""
 
         indexes = self._get_current_selection()
@@ -183,7 +183,7 @@ class NetLoadDialog(QtWidgets.QWidget):
                 "Network editor category does not match network category"
             )
 
-    def _paste_selected_network(self, name, context, network_pane):
+    def _paste_selected_network(self, name, context, cur_network):
         """Load selected network from clipboard.
 
         Args:
@@ -197,7 +197,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         src = os.path.join(self.vault_dir, self.user, name + '.cpio')
         shutil.copy(src, dst)
 
-        hou.pasteNodesFromClipboard(network_pane.pwd())
+        hou.pasteNodesFromClipboard(cur_network)
 
     def _wrap_selection_in_netbox(self, name, cur_network):
         """Create netbox around recently created network.
@@ -214,32 +214,43 @@ class NetLoadDialog(QtWidgets.QWidget):
         for node in hou.selectedNodes():
             netbox.addNode(node)
         netbox.fitAroundContents()
+    
+    @staticmethod
+    def _get_cur_network():
+        network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+        return network_pane.pwd()
 
-    def load_network(self):
+    def load_network(self, root_network=None):
         """Import selected network into active network editor pane."""
 
+        if not root_network and not hou.isUIAvailable():
+            raise RuntimeError(
+                "Must explicitly pass a root network in" 
+                "non-GUI sessions of Houdini"
+            )
+
         try:
-            name, context = self._get_network_data()
-            network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-            cur_network = network_pane.pwd()
+            name, context = self.get_network_data()
+            cur_network = root_network or self._get_cur_network()
             self._validate_network_editor(cur_network, context)
         except RuntimeError:
             return
 
-        self._paste_selected_network(name, context, network_pane)
+        self._paste_selected_network(name, context, cur_network)
 
         self._wrap_selection_in_netbox(name, cur_network)
 
-        hou.ui.displayMessage(
-            "Successfully loaded network!"
-        )
+        if hou.isUIAvailable():
+            hou.ui.displayMessage(
+                "Successfully loaded network!"
+            )
         self.close()
 
     def remove_network(self):
         """Remove network from GUI and associated json file."""
 
         try:
-            name, _context = self._get_network_data()
+            name, _context = self.get_network_data()
         except RuntimeError:
             return
 
