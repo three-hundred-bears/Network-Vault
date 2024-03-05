@@ -2,6 +2,7 @@
 import os
 import json
 from pathlib import Path
+from shutil import copy as shcopy
 import sys
 import unittest
 
@@ -47,6 +48,9 @@ class TestNetLoad(unittest.TestCase):
         }})
         with open(cls.vault_file, 'w') as f:
             json.dump(data, f)
+        src = os.path.join(vault_dir, cls.user, "network_A.cpio")
+        dst = os.path.join(vault_dir, cls.user, "network_C.cpio")
+        shcopy(src, dst)
 
         cls.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(
             sys.argv
