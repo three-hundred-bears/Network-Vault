@@ -25,7 +25,6 @@ class TestRemapNodeCategories(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             remap_node_categories(data)
 
-# TODO: use fixtures for this and similar tests, rather than live data
 class TestGetVaultDir(unittest.TestCase):
 
     def test_get_data_dir(self):
@@ -47,9 +46,12 @@ class TestGetVaultDir(unittest.TestCase):
 class TestGetVaultFiles(unittest.TestCase):
 
     def test_get_vault_files(self):
-        vault_dir = get_vault_dir()
+        vault_dir = os.path.join(
+            os.path.dirname(__file__),
+            "fixtures"
+        )
         for user in os.listdir(vault_dir):
-            vault_file = get_vault_file(user=user)
+            vault_file = get_vault_file(user=user, vault_dir=vault_dir)
             self.assertTrue(os.path.isfile(vault_file))
 
 
@@ -124,7 +126,9 @@ class TestReadNetworkVault(unittest.TestCase):
     def test_read(self):
         self.assertTrue(os.path.isfile(self.filepath))
         data = read_network_vault(self.filepath, 'r')
-        self.assertTrue(data["bacon"], "eggs")
+
+        network_data = data["network_A"]
+        self.assertTrue(network_data["context"], "OBJ")
 
     def test_write(self):
         newfile = os.path.join(self.fixture_dir, self.user, "write_test.json")
@@ -140,6 +144,7 @@ class TestReadNetworkVault(unittest.TestCase):
         with open(newfile, 'w') as f:
             json.dump(data, f)
         data = read_network_vault(newfile, 'w')
+
         self.assertEqual(data["foo"], "bar")
         os.remove(newfile)
 

@@ -28,7 +28,7 @@ class TestNetSave(unittest.TestCase):
             os.mkdir(test_dir)
         os.environ['HOUDINI_TEMP_DIR'] = 'C:\\Users\\houle\\AppData\\Local\\Temp\\houdini_temp'
 
-        cls.app = QtWidgets.QApplication(sys.argv)
+        cls.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
         cls.dialog = NetSaveDialog(user=cls.user)
 
     def test_get_network_data(self):
@@ -43,6 +43,24 @@ class TestNetSave(unittest.TestCase):
         self.assertEqual(result["context"], context)
         self.assertEqual(result["notes"], notes)
         self.assertEqual(result["version"], version)
+
+    def test_get_network_name(self):
+        # test valid input
+        valid_name = "my name"
+        self.dialog.title_edit.setPlainText(valid_name)
+        result = self.dialog.get_network_name(dict())
+        self.assertEqual(result, "my_name")
+
+        # test existing name
+        with self.assertRaises(RuntimeError):
+            self.dialog.get_network_name({"my_name" : "notes or whatever"})
+
+        # test invalid input
+        invalid_name = "my name!"
+        self.dialog.title_edit.setPlainText(invalid_name)
+        with self.assertRaises(RuntimeError):
+            self.dialog.get_network_name(dict())
+
 
     def test_save_network(self):
         notes = "test notes"

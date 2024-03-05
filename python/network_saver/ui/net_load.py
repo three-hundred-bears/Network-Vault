@@ -243,14 +243,14 @@ class NetLoadDialog(QtWidgets.QWidget):
         except RuntimeError:
             return
 
-        if not hou.ui.displayConfirmation(
+        if hou.isUIAvailable() and not hou.ui.displayConfirmation(
             "Are you sure you want to remove this network?", 
             severity=hou.severityType.Warning
         ):
             return
 
         vault_file = network_saver.utility.get_vault_file(
-            vault_dir=self.vault_dir
+            user=self.user, vault_dir=self.vault_dir
         )
         data = network_saver.utility.read_network_vault(vault_file, 'r')
 
@@ -296,8 +296,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.table_model.setRowCount(0)
 
-        vault_file = network_saver.utility.get_vault_file(user=self.user)
-
+        vault_file = network_saver.utility.get_vault_file(
+            user=self.user, vault_dir=self.vault_dir
+        )
         data = network_saver.utility.read_network_vault(vault_file, 'r')
 
         if not data:

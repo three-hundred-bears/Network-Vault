@@ -56,10 +56,6 @@ class NetSaveDialog(QtWidgets.QWidget):
             raise RuntimeError("No nodes selected")
         return selection
 
-<<<<<<< HEAD
-
-    def _get_network_name(self, data):
-=======
     def _validate_network_name(self, network_name, data):
         """Validate given network name against given network data.
 
@@ -88,17 +84,16 @@ class NetSaveDialog(QtWidgets.QWidget):
             raise RuntimeError("Operation aborted")
 
     def get_network_name(self, data):
->>>>>>> master
         """Fetch and validate given network name from GUI.
         
         Args:
             data dict: Map of currently saved networks to their relevant data.
         """
-        # TODO: split this into separate validation function, write test for validation
-        network_name = self.title_edit.toPlainText()
+
+        network_name = self.title_edit.toPlainText().replace(" ", "_")
         self._validate_network_name(network_name, data)
 
-        return network_name.replace(" ", "_")
+        return network_name
     
     def _move_network_file(self, vault_dir, context, network_name):
         """Copy currently stored CPIO file to vault directory.
@@ -158,7 +153,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         data = network_saver.utility.read_network_vault(vault_file, 'w')
 
         try:
-            network_name = self._get_network_name(data)
+            network_name = self.get_network_name(data)
         except RuntimeError:
             return
 
