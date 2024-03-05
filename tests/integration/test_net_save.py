@@ -82,8 +82,6 @@ class TestNetSave(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.dialog.show()  # TODO: get QTest or PyAutoGUI to close this when it opens
-        cls.app.exec_()
         cls.app.quit()
         shutil.rmtree(get_user_dir(user=cls.user))
 

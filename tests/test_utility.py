@@ -97,11 +97,11 @@ class TestGetNetworkContext(unittest.TestCase):
         # node that does not exist
         with self.assertRaises(AttributeError):
             get_network_context(hou.node('obj/foo'))
-        
+
         # node that's not a node
         with self.assertRaises(AttributeError):
             get_network_context(404)
-    
+
     def tearDown(self):
         self.subnet.destroy()
         self.flat.destroy()
@@ -110,7 +110,7 @@ class TestReadNetworkVault(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.user = "test"
+        cls.user = "_test"
         cls.fixture_dir = os.path.join(
             os.path.dirname(__file__),
             "fixtures",
@@ -130,7 +130,7 @@ class TestReadNetworkVault(unittest.TestCase):
         newfile = os.path.join(self.fixture_dir, self.user, "write_test.json")
         if os.path.isfile(newfile):
             os.remove(newfile)
-        
+
         # Test file creation
         data = read_network_vault(newfile, 'w')
         self.assertTrue(os.path.isfile(newfile))

@@ -23,8 +23,6 @@ def enableHou():
 if __name__ == "__main__":
     enableHou()
     runner = unittest.TextTestRunner()
-    # int_tests = unittest.defaultTestLoader.discover("tests/integration")
     tests = unittest.defaultTestLoader.discover("tests")
-    # runner.run(int_tests)
-    runner.run(tests)
 
+    runner.run(tests)

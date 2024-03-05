@@ -14,13 +14,13 @@ import network_saver.utility
 
 class NetLoadDialog(QtWidgets.QWidget):
     """GUI allowing user to load saved networks into Houdini."""
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, user=None, root=None):
         super(NetLoadDialog, self).__init__(parent)
 
         self.setWindowTitle('Load Selected Network')
 
-        self.vault_dir = network_saver.utility.get_vault_dir()
-        self.user = getuser()
+        self.vault_dir = root or network_saver.utility.get_vault_dir()
+        self.user = user or getuser()
 
         vbox = QtWidgets.QVBoxLayout()
         hbox = QtWidgets.QHBoxLayout()
@@ -45,9 +45,15 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.table_view.horizontalHeader().setMaximumHeight(25)
         self.table_view.verticalHeader().setVisible(False)
-        self.table_view.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.table_view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.table_view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.table_view.setHorizontalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        self.table_view.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        self.table_view.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOff
+        )
         self.table_view.setWordWrap(True)
 
         for index, width in [(0, 150), (1, 150), (2, 60), (3, 350)]:
@@ -56,8 +62,12 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.table_view.setShowGrid(False)
         self.table_view.setWordWrap(True)
         self.table_view.setAlternatingRowColors(True)
-        self.table_view.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
-        self.table_view.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.table_view.setSelectionBehavior(
+            QtWidgets.QAbstractItemView.SelectRows
+        )
+        self.table_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.SingleSelection
+        )
 
         self.load_button = QtWidgets.QPushButton('Load Network', self)
 
@@ -73,7 +83,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.load_button.clicked.connect(self.load_network)
         self.remove_button.clicked.connect(self.remove_network)
-        self.user_combobox.currentIndexChanged.connect(self._handle_user_change)
+        self.user_combobox.currentIndexChanged.connect(
+            self._handle_user_change
+        )
 
     def sizeHint(self):
         """GUI dimensions."""
@@ -224,7 +236,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.close()
 
     def remove_network(self):
-        """Remove network from GUI."""
+        """Remove network from GUI and associated json file."""
 
         try:
             name, _context = self._get_network_data()
@@ -237,7 +249,9 @@ class NetLoadDialog(QtWidgets.QWidget):
         ):
             return
 
-        vault_file = network_saver.utility.get_vault_file()
+        vault_file = network_saver.utility.get_vault_file(
+            vault_dir=self.vault_dir
+        )
         data = network_saver.utility.read_network_vault(vault_file, 'r')
 
         try:

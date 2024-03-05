@@ -55,7 +55,8 @@ class NetSaveDialog(QtWidgets.QWidget):
                 )
             raise RuntimeError("No nodes selected")
         return selection
-    
+
+
     def _get_network_name(self, data):
         """Fetch and validate given network name from GUI.
         
