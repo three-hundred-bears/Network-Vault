@@ -31,6 +31,11 @@ def remap_node_categories(category_name):
     $HOUDINI_TEMP_DIR, prefixed with the category of the network it was 
     copied from. This func remaps the name of the categories given by
     hou.NodeTypeCategory.name() to the convention used for these CPIO files.
+
+    Args:
+        category_name str: Node category to be remapped.
+    Returns:
+        str: Remapped node category.
     """
 
     conformed_cat = CATEGORY_MAP.get(category_name)
@@ -44,14 +49,23 @@ def remap_node_categories(category_name):
 
 
 def get_data_dir():
-    """Fetch directory containing module data."""
+    """Fetch directory containing module data.
+    
+    Returns:
+        str: Path-like object representing data directory of project.
+    """
 
     cur_dir = Path(__file__)
     return os.path.join(cur_dir.parents[2], 'data')
 
 
 def get_vault_dir():
-    """Fetch vault directory from text file containing it."""
+    """Fetch vault directory from text file containing it.
+
+    Returns:
+        str: First line in vault_dir.txt, ideally pointing to root vault 
+             vault directory.
+    """
 
     vault_file = os.path.join(
         get_data_dir(),
@@ -85,6 +99,8 @@ def get_node_context(node):
     
     Args:
         node hou.Node: Node to fetch category for.
+    Returns:
+        str: Remapped category of given node.
     """
 
     return remap_node_categories(node.type().category().name())
@@ -92,9 +108,10 @@ def get_node_context(node):
 
 def get_network_context(node):
     """Get child network category of given node.
-    
+
     Args:
         node hou.Node: Node to fetch child category for.
+    Returns: Remapped category of internal network of given node.
     """
 
     category = node.type().childTypeCategory()
@@ -144,6 +161,8 @@ def read_network_vault(filepath, mode):
         mode string: Determines how to react in the event that the file does
                      not exist.
         user string: User to read vault json from.
+    Returns:
+        dict: Dict representation of contents of given filepath.
     """
 
     if not os.path.splitext(filepath)[1] == ".json":
@@ -166,3 +185,67 @@ def read_network_vault(filepath, mode):
         print('Warning: Could not load config json at ', filepath)
         print(err)
     return data
+
+
+def read_user_data(user=None, vault_dir=None):
+    """Read network vault data for given user.
+    
+    Args:
+        user str: User to retrieve data for.
+        vault_dir str: Path-like object to vault directory.
+    Returns:
+        dict: Dict representation of network data for given user.
+    """
+
+    user = user or getuser()
+    vault_dir = vault_dir or get_vault_dir()
+    vault_file = get_vault_file(user=user, vault_dir=vault_dir)
+    return read_network_vault(vault_file, 'r')
+
+
+def delete_network_data(network_name, user=None, vault_dir=None):
+    """Delete given network's entry from vault json.
+    
+    Args:
+        network_name str: Network to remove.
+        user str: User whose vault to remove network from.
+        vault_dir str: Path-like object representing vault location.
+    """
+
+    user = user or getuser()
+    vault_dir = vault_dir or get_vault_dir()
+
+    vault_file = get_vault_file(
+        user=user, vault_dir=vault_dir
+    )
+    data = read_network_vault(vault_file, 'r')
+
+    # update network data
+    try:
+        data.pop(network_name)
+    except KeyError:
+        # assume it's already gone somehow, which we want anyway
+        pass
+    with open(vault_file, 'w') as vault_f:
+        json.dump(data, vault_f)
+
+
+def remove_cpio_file(network_name, user=None, vault_dir=None):
+    """Remove given network's CPIO file from vault location.
+    
+    Args:
+        network_name str: Network to remove.
+        user str: User whose vault to remove network from.
+        vault_dir str: Path-like object representing vault location.
+    """
+
+    user = user or getuser()
+    vault_dir = vault_dir or get_vault_dir()
+
+    full_path = os.path.join(
+        vault_dir, user, network_name + ".cpio"
+    )
+    if not os.path.isfile(full_path):
+        print("Unable to remove ", full_path, ": Does not exist!")
+        return
+    os.remove(full_path)

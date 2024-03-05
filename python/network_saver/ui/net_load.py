@@ -1,6 +1,5 @@
 """Contains a GUI allowing a user to load their saved networks into Houdini."""
 
-import json
 import os
 from getpass import getuser
 import shutil
@@ -15,6 +14,12 @@ import network_saver.utility
 class NetLoadDialog(QtWidgets.QWidget):
     """GUI allowing user to load saved networks into Houdini."""
     def __init__(self, parent=None, user=None, root=None):
+        """Initialize GUI.
+
+        Args:
+            user str: User to initialize GUI under.
+            root str: Path-like object representing vault location.
+        """
         super(NetLoadDialog, self).__init__(parent)
 
         self.setWindowTitle('Load Selected Network')
@@ -23,25 +28,29 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.user = user or getuser()
 
         vbox = QtWidgets.QVBoxLayout()
-        hbox = QtWidgets.QHBoxLayout()
 
+        # user selection
+        hbox = QtWidgets.QHBoxLayout()
         user_label = QtWidgets.QLabel(self)
         user_label.setText('User:')
         self.user_combobox = QtWidgets.QComboBox(self)
         hbox.addWidget(user_label)
         hbox.addWidget(self.user_combobox)
         hbox.addStretch()
+
+        # network removal
         self.remove_button = QtWidgets.QPushButton('Remove Network', self)
         hbox.addWidget(self.remove_button)
 
+        # setup table model 
         self.table_model = QtGui.QStandardItemModel()
-        self.table_view = QtWidgets.QTableView()
-        self.table_view.setModel(self.table_model)
-
         self.table_model.setHorizontalHeaderLabels(
             ['Name', 'Houdini Version', 'Context', 'Description']
         )
 
+        # setup table view
+        self.table_view = QtWidgets.QTableView()
+        self.table_view.setModel(self.table_model)
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.table_view.horizontalHeader().setMaximumHeight(25)
         self.table_view.verticalHeader().setVisible(False)
@@ -55,10 +64,8 @@ class NetLoadDialog(QtWidgets.QWidget):
             QtCore.Qt.ScrollBarAlwaysOff
         )
         self.table_view.setWordWrap(True)
-
         for index, width in [(0, 150), (1, 150), (2, 60), (3, 350)]:
             self.table_view.setColumnWidth(index, width)
-
         self.table_view.setShowGrid(False)
         self.table_view.setWordWrap(True)
         self.table_view.setAlternatingRowColors(True)
@@ -71,16 +78,18 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.load_button = QtWidgets.QPushButton('Load Network', self)
 
+        # layout
         vbox.addLayout(hbox)
         vbox.addWidget(self.table_view)
         vbox.addWidget(self.load_button)
-
         self.setLayout(vbox)
 
+        # preflight 
         self.refresh_networks()
         self._populate_users()
         self._set_current_user()
 
+        # connections
         self.load_button.clicked.connect(self.load_network)
         self.remove_button.clicked.connect(self.remove_network)
         self.user_combobox.currentIndexChanged.connect(
@@ -111,7 +120,9 @@ class NetLoadDialog(QtWidgets.QWidget):
            network json.
 
         Args:
-            folder: string representing file/folder present in vault dir
+            folder: String representing file/folder present in vault dir.
+        Returns:
+            bool: Value representing validation status.
         """
 
         full_path = os.path.join(self.vault_dir, folder)
@@ -125,14 +136,15 @@ class NetLoadDialog(QtWidgets.QWidget):
     def _populate_users(self):
         """Populate user combobox based on contents of vault dir."""
 
-        dirs = []
-        for folder in os.listdir(self.vault_dir):
-            dirs.append(folder)
-        user_dirs = filter(self._validate_user_dir, dirs)
+        user_dirs = filter(self._validate_user_dir, os.listdir(self.vault_dir))
         self.user_combobox.addItems(user_dirs)
 
     def _get_current_selection(self):
-        """Get currently selected network as row of indexes."""
+        """Get currently selected network as row of indexes.
+        
+        Returns:
+            tuple: Collection of selected row indexes.
+        """
 
         indexes = self.table_view.selectionModel().selectedIndexes()
         if not indexes:
@@ -145,7 +157,12 @@ class NetLoadDialog(QtWidgets.QWidget):
         return indexes
 
     def get_network_data(self):
-        """Fetch data associated with selected network."""
+        """Fetch data associated with selected network.
+
+        Returns:
+            str: Name of selected network.
+            str: Category of selected network.
+        """
 
         indexes = self._get_current_selection()
         name = indexes[0].data(QtCore.Qt.UserRole)
@@ -153,7 +170,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         return name, context
 
-    def _validate_network_editor(self, current_network, expected_context):
+    def _validate_root_network(self, current_network, expected_context):
         """Ensure current network editor is same category as selected network.
 
         Args:
@@ -217,6 +234,11 @@ class NetLoadDialog(QtWidgets.QWidget):
     
     @staticmethod
     def _get_cur_network():
+        """Get root node of current active network editor pane
+
+        Returns:
+            hou.Node: Root node of current network editor.
+        """
         network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
         return network_pane.pwd()
 
@@ -232,8 +254,9 @@ class NetLoadDialog(QtWidgets.QWidget):
         try:
             name, context = self.get_network_data()
             cur_network = root_network or self._get_cur_network()
-            self._validate_network_editor(cur_network, context)
+            self._validate_root_network(cur_network, context)
         except RuntimeError:
+            # assume we failed network validation
             return
 
         self._paste_selected_network(name, context, cur_network)
@@ -245,17 +268,6 @@ class NetLoadDialog(QtWidgets.QWidget):
                 "Successfully loaded network!"
             )
         self.close()
-    
-    def remove_cpio_file(self, name):
-
-        full_path = os.path.join(
-            self.vault_dir, self.user, name + ".cpio"
-        )
-        if not os.path.isfile(full_path):
-            print("Unable to remove ", full_path, ": Does not exist!")
-            return
-        os.remove(full_path)
-
 
     def remove_network(self):
         """Remove network from GUI and associated json file."""
@@ -263,6 +275,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         try:
             name, _context = self.get_network_data()
         except RuntimeError:
+            # assume no network was selected
             return
 
         if hou.isUIAvailable() and not hou.ui.displayConfirmation(
@@ -271,37 +284,30 @@ class NetLoadDialog(QtWidgets.QWidget):
         ):
             return
 
-        vault_file = network_saver.utility.get_vault_file(
-            user=self.user, vault_dir=self.vault_dir
+        # remove network from json
+        network_saver.utility.delete_network_data(
+            name, user=self.user, vault_dir=self.vault_dir
         )
-        data = network_saver.utility.read_network_vault(vault_file, 'r')
 
-        # update network data
-        try:
-            data.pop(name)
-        except KeyError:
-            # assume it's already gone somehow, which we want anyway
-            pass
-        with open(vault_file, 'w') as vault_f:
-            json.dump(data, vault_f)
-        
         # remove cpio file
-        self.remove_cpio_file(name)
+        network_saver.utility.remove_cpio_file(
+            name, user=self.user, vault_dir=self.vault_dir
+        )
 
         try:
             self.refresh_networks()
         except RuntimeError:
             self.close()
 
-
-    def _append_network_row(self, network_name, network_data):
-        """Add network as row to GUI, with relevant data stored in associated
-           columns.
-
+    def _construct_network_row(self, network_name, network_data):
+        """Create row representation of given network data.
+        
         Args:
-            network_name string: Name of network being added.
+            network_name str: Name of network being added.
             network_data dict: Map of relevant network data, including Houdini
                                version, category, and description.
+        Returns:
+            list: List of QStandardItems representing network row in GUI.
         """
 
         name_item = QtGui.QStandardItem(network_name)
@@ -314,6 +320,20 @@ class NetLoadDialog(QtWidgets.QWidget):
         row = [name_item, version_item, context_item, notes_item]
         for item in row:
             item.setEditable(False)
+        
+        return row
+
+    def _append_network_row(self, network_name, network_data):
+        """Add network as row to GUI, with relevant data stored in associated
+           columns.
+
+        Args:
+            network_name string: Name of network being added.
+            network_data dict: Map of relevant network data, including Houdini
+                               version, category, and description.
+        """
+
+        row = self._construct_network_row(network_name, network_data)
 
         self.table_model.appendRow(row)
 
@@ -322,17 +342,17 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.table_model.setRowCount(0)
 
-        vault_file = network_saver.utility.get_vault_file(
+        data = network_saver.utility.read_user_data(
             user=self.user, vault_dir=self.vault_dir
         )
-        data = network_saver.utility.read_network_vault(vault_file, 'r')
 
         if not data:
-            hou.ui.displayMessage(
-                "No networks available to load!\n"
-                "Please first save a network using the network saver tool.",
-                severity=hou.severityType.Error
-            )
+            if hou.isUIAvailable():
+                hou.ui.displayMessage(
+                    "No networks available to load!\n"
+                    "Please first save a network using the network saver tool.",
+                    severity=hou.severityType.Error
+                )
             raise RuntimeError("Network vault empty")
 
         for name, meta in data.items():
