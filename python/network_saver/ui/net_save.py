@@ -56,8 +56,39 @@ class NetSaveDialog(QtWidgets.QWidget):
             raise RuntimeError("No nodes selected")
         return selection
 
+<<<<<<< HEAD
 
     def _get_network_name(self, data):
+=======
+    def _validate_network_name(self, network_name, data):
+        """Validate given network name against given network data.
+
+        Ensure given network name conforms to convention that won't conflict
+        with Houdini's restriction on node names.
+
+        Args:
+            network_name str: Name of network to be validated.
+            data dict: Map of currently saved networks to their relevant data.
+        """
+
+        if not re.match(r'^[a-zA-Z0-9_ ]+$', network_name):
+            if hou.isUIAvailable():
+                hou.ui.displayMessage(
+                    "Please make ensure network name is alphanumeric!\n"
+                    "(only numbers, letters, spaces, or underscores)",
+                    severity=hou.severityType.Warning
+                )
+            raise RuntimeError("Invalid network name")
+        if network_name in data.keys(): 
+            if hou.isUIAvailable() and hou.ui.displayConfirmation(
+                "Network with this name already exists!\n"
+                "Would you like to replace it?"
+            ):
+                return
+            raise RuntimeError("Operation aborted")
+
+    def get_network_name(self, data):
+>>>>>>> master
         """Fetch and validate given network name from GUI.
         
         Args:
@@ -65,18 +96,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         """
         # TODO: split this into separate validation function, write test for validation
         network_name = self.title_edit.toPlainText()
-        if not re.match(r'^[a-zA-Z0-9_ ]+$', network_name):
-            hou.ui.displayMessage(
-                "Please make ensure network name is alphanumeric!\n"
-                "(only numbers, letters, spaces, or underscores)",
-                severity=hou.severityType.Warning
-            )
-            raise RuntimeError("Invalid network name")
-        if network_name in data.keys() and not hou.ui.displayConfirmation(
-            "Network with this name already exists!\n"
-            "Would you like to replace it?"
-        ):
-            raise RuntimeError("Operation aborted")
+        self._validate_network_name(network_name, data)
 
         return network_name.replace(" ", "_")
     
