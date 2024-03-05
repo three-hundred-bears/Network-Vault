@@ -245,6 +245,17 @@ class NetLoadDialog(QtWidgets.QWidget):
                 "Successfully loaded network!"
             )
         self.close()
+    
+    def remove_cpio_file(self, name):
+
+        full_path = os.path.join(
+            self.vault_dir, self.user, name + ".cpio"
+        )
+        if not os.path.isfile(full_path):
+            print("Unable to remove ", full_path, ": Does not exist!")
+            return
+        os.remove(full_path)
+
 
     def remove_network(self):
         """Remove network from GUI and associated json file."""
@@ -265,6 +276,7 @@ class NetLoadDialog(QtWidgets.QWidget):
         )
         data = network_saver.utility.read_network_vault(vault_file, 'r')
 
+        # update network data
         try:
             data.pop(name)
         except KeyError:
@@ -272,6 +284,9 @@ class NetLoadDialog(QtWidgets.QWidget):
             pass
         with open(vault_file, 'w') as vault_f:
             json.dump(data, vault_f)
+        
+        # remove cpio file
+        self.remove_cpio_file(name)
 
         try:
             self.refresh_networks()

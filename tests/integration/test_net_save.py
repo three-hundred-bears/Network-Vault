@@ -26,6 +26,7 @@ class TestNetSave(unittest.TestCase):
         except FileExistsError:
             shutil.rmtree(test_dir)
             os.mkdir(test_dir)
+        # TODO: maybe just source houdini.env instead?
         os.environ['HOUDINI_TEMP_DIR'] = 'C:\\Users\\houle\\AppData\\Local\\Temp\\houdini_temp'
 
         cls.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)

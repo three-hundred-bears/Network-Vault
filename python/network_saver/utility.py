@@ -113,7 +113,6 @@ def _make(config_file):
 
     user_dir = os.path.dirname(config_file)
     if not os.path.isdir(user_dir):
-        print('\nmaking ', user_dir, '\n')
         os.mkdir(user_dir)  # TODO: change mode so only user has perms
     with open(config_file, 'x') as config_f:
         json.dump(dict(), config_f)
