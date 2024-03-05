@@ -14,28 +14,37 @@ import network_saver.utility
 
 class NetSaveDialog(QtWidgets.QWidget):
     """GUI allowing user to save selected networks to be loaded later."""
-    def __init__(self, parent=None, user=None):
+    def __init__(self, parent=None, user=None, root=None):
+        """Initializes NetSave GUI.
+
+        Args:
+            user str: User to initialize GUI under.
+            root str: Path-like object representing vault location.
+        """
         super(NetSaveDialog, self).__init__(parent)
 
         self.setWindowTitle('Save Selected Network')
 
+        self.vault_dir = root or network_saver.utility.get_vault_dir()
         self.user = user or getuser()
 
         form = QtWidgets.QFormLayout()
 
+        # network naming
         self.title_edit = QtWidgets.QPlainTextEdit(self)
         self.title_edit.setFixedHeight(30)
-        form.addRow("Network Name: ", self.title_edit)
 
+        # network description
         notes_label = QtWidgets.QLabel("Notes:")
         self.notes = QtWidgets.QPlainTextEdit(self)
         self.notes.setFixedHeight(64)
-        form.addRow(notes_label)
-        form.addRow(self.notes)
 
         self.save_button = QtWidgets.QPushButton('Ok', self)
-        form.addRow(self.save_button)
 
+        form.addRow("Network Name: ", self.title_edit)
+        form.addRow(notes_label)
+        form.addRow(self.notes)
+        form.addRow(self.save_button)
         self.setLayout(form)
 
         self.save_button.clicked.connect(self.save_network)
@@ -46,7 +55,11 @@ class NetSaveDialog(QtWidgets.QWidget):
         return QtCore.QSize(400, 100)
     
     def _get_selected_nodes(self):
-        """Fetch currently selected nodes."""
+        """Fetch currently selected nodes.
+        
+        Returns:
+            tuple: Collection of currently selected nodes.
+        """
 
         selection = hou.selectedNodes()
         if not selection:
@@ -88,6 +101,8 @@ class NetSaveDialog(QtWidgets.QWidget):
         
         Args:
             data dict: Map of currently saved networks to their relevant data.
+        Returns:
+            str: Name of network to be saved.
         """
 
         network_name = self.title_edit.toPlainText().replace(" ", "_")
@@ -116,6 +131,8 @@ class NetSaveDialog(QtWidgets.QWidget):
         Args:
             selection tuple: Collection of hou.Node objects representing
                              currently selected network.
+        Returns:
+            dict: Relevant data of network to be saved.
         """
 
         notes = self.notes.toPlainText()
@@ -127,7 +144,7 @@ class NetSaveDialog(QtWidgets.QWidget):
     def _write_network_data(
             self, config_file, data, network_name, network_data):
         """Update network json with data associated with current network.
-        
+
         Args:
             config_file string: Path-like object representing config file to 
                                 save to.

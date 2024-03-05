@@ -14,7 +14,7 @@ import network_saver.utility
 class NetLoadDialog(QtWidgets.QWidget):
     """GUI allowing user to load saved networks into Houdini."""
     def __init__(self, parent=None, user=None, root=None):
-        """Initialize GUI.
+        """Initializes NetLoad GUI.
 
         Args:
             user str: User to initialize GUI under.
