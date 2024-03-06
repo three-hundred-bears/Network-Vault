@@ -30,8 +30,13 @@ def _remove_network(file, name):
 class TestNetLoad(unittest.TestCase):
 
     @classmethod
-    def setUpClass(cls):  # TODO: V this is obviously no good
-        os.environ['HOUDINI_TEMP_DIR'] = 'C:\\Users\\houle\\AppData\\Local\\Temp\\houdini_temp'
+    def setUpClass(cls):
+        tmp_dir = os.path.join(
+            os.getenv('LOCALAPPDATA'),
+            "Temp",
+            "houdini_temp"
+        )
+        os.environ['HOUDINI_TEMP_DIR'] = tmp_dir
         cls.user = "_test"
         vault_dir = os.path.join(
             Path(__file__).parents[1],

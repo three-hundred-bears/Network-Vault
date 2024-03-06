@@ -15,6 +15,13 @@ class TestNetSave(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        tmp_dir = os.path.join(
+            os.getenv('LOCALAPPDATA'),
+            "Temp",
+            "houdini_temp"
+        )
+        os.environ['HOUDINI_TEMP_DIR'] = tmp_dir
+
         test_node = hou.node('obj').createNode('geo')
         test_node.setSelected(True, clear_all_selected=True)
         cls.selection = hou.selectedNodes()
@@ -26,10 +33,10 @@ class TestNetSave(unittest.TestCase):
         except FileExistsError:
             shutil.rmtree(test_dir)
             os.mkdir(test_dir)
-        # TODO: maybe just source houdini.env instead?
-        os.environ['HOUDINI_TEMP_DIR'] = 'C:\\Users\\houle\\AppData\\Local\\Temp\\houdini_temp'
 
-        cls.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
+        cls.app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(
+            sys.argv
+        )
         cls.dialog = NetSaveDialog(user=cls.user)
 
     def test_get_network_data(self):
