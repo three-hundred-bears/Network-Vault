@@ -190,7 +190,6 @@ class NetSaveDialog(QtWidgets.QWidget):
             )
         self.close()
 
-
 def launch():
     """Launch GUI, parenting to Houdini main window."""
 
