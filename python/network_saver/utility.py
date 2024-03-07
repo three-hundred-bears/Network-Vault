@@ -72,7 +72,12 @@ def get_vault_dir():
         'vault_dir.txt'
     )
     with open(vault_file, 'r') as f:
-        return f.readline().strip()
+        vault_path = Path(f.readline().strip())
+    if vault_path.is_absolute():
+        return str(vault_path)
+    cur_dir = Path(__file__)
+    project_dir = cur_dir.parents[2]
+    return os.path.join(project_dir, str(vault_path))
 
 
 def get_user_dir(user=None, vault_dir=None):
@@ -130,7 +135,7 @@ def _make(config_file):
 
     user_dir = os.path.dirname(config_file)
     if not os.path.isdir(user_dir):
-        os.mkdir(user_dir)  # TODO: change mode so only user has perms
+        os.makedirs(user_dir, mode=0o644)
     with open(config_file, 'x') as config_f:
         json.dump(dict(), config_f)
 

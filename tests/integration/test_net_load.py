@@ -90,7 +90,7 @@ class TestNetLoad(unittest.TestCase):
         netbox = geo.parentNetworkBox()
         self.assertIsNotNone(netbox)
         self.assertEqual(network_name, netbox.comment())
-    
+
     def test_refresh_networks(self):
         self.assertEqual(self.dialog.table_model.rowCount(), 3)
         network_name = "network_D"
@@ -99,6 +99,7 @@ class TestNetLoad(unittest.TestCase):
             "notes": "notes D",
             "version": "20.0.506"
         }
+
         _add_network(self.vault_file, network_name, data)
         self.dialog.refresh_networks()
         self.assertEqual(self.dialog.table_model.rowCount(), 4)
