@@ -139,19 +139,20 @@ class NetLoadDialog(QtWidgets.QWidget):
         user_dirs = filter(self._validate_user_dir, os.listdir(self.vault_dir))
         self.user_combobox.addItems(user_dirs)
 
-    def _get_current_selection(self):
+    def get_current_selection(self):
         """Get currently selected network as row of indexes.
-        
+
         Returns:
             tuple: Collection of selected row indexes.
         """
 
         indexes = self.table_view.selectionModel().selectedIndexes()
         if not indexes:
-            hou.ui.displayMessage(
-                "No network selected!",
-                severity=hou.severityType.Error
-            )
+            if hou.isUIAvailable():
+                hou.ui.displayMessage(
+                    "No network selected!",
+                    severity=hou.severityType.Error
+                )
             raise RuntimeError("No network selected")
 
         return indexes
@@ -164,7 +165,7 @@ class NetLoadDialog(QtWidgets.QWidget):
             str: Category of selected network.
         """
 
-        indexes = self._get_current_selection()
+        indexes = self.get_current_selection()
         name = indexes[0].data(QtCore.Qt.UserRole)
         context = indexes[2].data(QtCore.Qt.UserRole)
 

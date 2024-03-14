@@ -22,8 +22,8 @@ class TestNetSave(unittest.TestCase):
         )
         os.environ['HOUDINI_TEMP_DIR'] = tmp_dir
 
-        test_node = hou.node('obj').createNode('geo')
-        test_node.setSelected(True, clear_all_selected=True)
+        cls.test_node = hou.node('obj').createNode('geo')
+        cls.test_node.setSelected(True, clear_all_selected=True)
         cls.selection = hou.selectedNodes()
         cls.user = "_test"
 
@@ -38,6 +38,23 @@ class TestNetSave(unittest.TestCase):
             sys.argv
         )
         cls.dialog = NetSaveDialog(user=cls.user)
+
+    def test_get_selected_nodes(self):
+        self.test_node.setSelected(False, clear_all_selected=True)
+        with self.assertRaises(RuntimeError):
+            self.dialog.get_selected_nodes()
+        self.test_node.setSelected(True, clear_all_selected=True)
+        selection = self.dialog.get_selected_nodes()
+        self.assertTrue(len(selection) > 0)
+    
+    def test_validate_name(self):
+        invalid_name = "@#*&"
+        with self.assertRaises(RuntimeError):
+            self.dialog.validate_network_name(invalid_name, dict())
+        valid_name = "my_network"
+        with self.assertRaises(RuntimeError):
+            self.dialog.validate_network_name(valid_name, {"my_network": "eggs"})
+        self.dialog.validate_network_name(valid_name, dict())
 
     def test_get_network_data(self):
         notes = "test notes"

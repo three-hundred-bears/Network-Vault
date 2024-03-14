@@ -53,8 +53,8 @@ class NetSaveDialog(QtWidgets.QWidget):
         """GUI dimensions."""
 
         return QtCore.QSize(400, 100)
-    
-    def _get_selected_nodes(self):
+
+    def get_selected_nodes(self):
         """Fetch currently selected nodes.
         
         Returns:
@@ -63,13 +63,14 @@ class NetSaveDialog(QtWidgets.QWidget):
 
         selection = hou.selectedNodes()
         if not selection:
-            hou.ui.displayMessage(
-                "No nodes selected!", severity=hou.severityType.Warning
+            if hou.isUIAvailable():
+                hou.ui.displayMessage(
+                    "No nodes selected!", severity=hou.severityType.Warning
                 )
             raise RuntimeError("No nodes selected")
         return selection
 
-    def _validate_network_name(self, network_name, data):
+    def validate_network_name(self, network_name, data):
         """Validate given network name against given network data.
 
         Ensure given network name conforms to convention that won't conflict
@@ -106,7 +107,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         """
 
         network_name = self.title_edit.toPlainText().replace(" ", "_")
-        self._validate_network_name(network_name, data)
+        self.validate_network_name(network_name, data)
 
         return network_name
     
@@ -162,7 +163,7 @@ class NetSaveDialog(QtWidgets.QWidget):
         """Save network currently selected in GUI to json located on disk."""
 
         try:
-            selection = self._get_selected_nodes()
+            selection = self.get_selected_nodes()
         except RuntimeError:
             return
 

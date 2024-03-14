@@ -7,7 +7,7 @@ import sys
 import unittest
 
 import hou
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 
 from network_saver.ui.net_load import NetLoadDialog
 from network_saver.utility import *
@@ -61,6 +61,17 @@ class TestNetLoad(unittest.TestCase):
             sys.argv
         )
         cls.dialog = NetLoadDialog(user=cls.user, root=vault_dir)
+    
+    def test_get_current_selection(self):
+
+        with self.assertRaises(RuntimeError):
+            self.dialog.get_current_selection()
+        self.dialog.table_view.selectRow(0)
+        indexes = self.dialog.get_current_selection()
+        self.assertEqual(len(indexes), 4)
+        self.assertEqual(indexes[0].data(QtCore.Qt.UserRole), "network_A")
+        self.assertEqual(indexes[2].data(QtCore.Qt.UserRole), "OBJ")
+
 
     def test_remove_network(self):
         # ensure setUp ran correctly

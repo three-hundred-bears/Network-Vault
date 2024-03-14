@@ -81,6 +81,12 @@ def get_vault_dir():
 
 
 def get_user_dir(user=None, vault_dir=None):
+    """Fetch user directory from vault location.
+    
+    Args:
+        user string: User to fetch dir for
+        vault_dir string: Path-like object representing current vualt location
+    """
 
     vault_dir = vault_dir or get_vault_dir()
     user = user or getuser()

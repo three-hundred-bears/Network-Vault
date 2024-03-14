@@ -42,6 +42,31 @@ class TestGetVaultDir(unittest.TestCase):
         vault_dir = get_vault_dir()
         self.assertTrue(os.path.isdir(vault_dir))
 
+class TestGetUserDir(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.user = "_monty"
+        cls.fixture_dir = os.path.join(
+            os.path.dirname(__file__),
+            "fixtures",
+        )
+        cls.user_dir = os.path.join(cls.fixture_dir, cls.user)
+        os.mkdir(cls.user_dir)
+    
+    def test_output(self):
+        user_dir = get_user_dir(user=self.user, vault_dir=self.fixture_dir)
+        self.assertTrue(os.path.isdir(user_dir))
+    
+    def test_bad_output(self):
+        # should not be making or validating these directories
+        user_dir = get_user_dir(user="_alan", vault_dir=self.fixture_dir)
+        self.assertFalse(os.path.isdir(user_dir))
+    
+    @classmethod
+    def tearDownClass(cls):
+        os.rmdir(cls.user_dir)
+
 
 class TestGetVaultFiles(unittest.TestCase):
 
@@ -57,8 +82,9 @@ class TestGetVaultFiles(unittest.TestCase):
 
 class TestGetNodeContext(unittest.TestCase):
 
-    def setUp(self):
-        self.node = hou.node('obj').createNode('geo')
+    @classmethod
+    def setUpClass(cls):
+        cls.node = hou.node('obj').createNode('geo')
 
     def test_output(self):
         # object node
@@ -75,15 +101,17 @@ class TestGetNodeContext(unittest.TestCase):
         with self.assertRaises(AttributeError):
             get_node_context(42)
 
-    def tearDown(self):
-        self.node.destroy()
+    @classmethod
+    def tearDownClass(cls):
+        cls.node.destroy()
 
 
 class TestGetNetworkContext(unittest.TestCase):
 
-    def setUp(self):
-        self.subnet = hou.node('obj').createNode('lopnet')
-        self.flat = hou.node('obj').createNode('geo').createNode('add')
+    @classmethod
+    def setUpClass(cls):
+        cls.subnet = hou.node('obj').createNode('lopnet')
+        cls.flat = hou.node('obj').createNode('geo').createNode('add')
 
     def test_output(self):
         # object node containing lop network
@@ -104,9 +132,10 @@ class TestGetNetworkContext(unittest.TestCase):
         with self.assertRaises(AttributeError):
             get_network_context(404)
 
-    def tearDown(self):
-        self.subnet.destroy()
-        self.flat.destroy()
+    @classmethod
+    def tearDownClass(cls):
+        cls.subnet.destroy()
+        cls.flat.destroy()
 
 class TestReadNetworkVault(unittest.TestCase):
 
@@ -155,6 +184,29 @@ class TestReadNetworkVault(unittest.TestCase):
     def test_bad_filepath(self):
         with self.assertRaises(ValueError):
             read_network_vault("monty", 'r')
+
+
+class TestReadUserData(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.user = "_test"
+        cls.fixture_dir = os.path.join(
+            os.path.dirname(__file__),
+            "fixtures",
+        )
+
+    def test_read(self):
+        data = read_user_data(user=self.user, vault_dir=self.fixture_dir)
+        network_data = data["network_A"]
+        self.assertTrue(network_data["context"], "OBJ")
+
+    def test_bad_user(self):
+        with self.assertRaises(RuntimeError):
+            read_user_data(user="lk@fs&*(12)", vault_dir=self.fixture_dir)
+
+# delete_network_data() and remove_cpio_file() are both tested in
+# integration\test_net_load.TestNetLoad.test_remove_network()
 
 
 if __name__ == "__main__":
