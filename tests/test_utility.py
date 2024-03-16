@@ -30,6 +30,10 @@ class TestGetVaultDir(unittest.TestCase):
     def test_get_data_dir(self):
         data_dir = get_data_dir()
         self.assertTrue(os.path.isdir(data_dir))
+        self.assertEqual(
+            data_dir,
+            os.path.abspath("data")
+        )
 
     def test_get_data_file(self):
         data_file = os.path.join(
@@ -53,16 +57,20 @@ class TestGetUserDir(unittest.TestCase):
         )
         cls.user_dir = os.path.join(cls.fixture_dir, cls.user)
         os.mkdir(cls.user_dir)
-    
+
     def test_output(self):
         user_dir = get_user_dir(user=self.user, vault_dir=self.fixture_dir)
         self.assertTrue(os.path.isdir(user_dir))
-    
+        self.assertEqual(
+            user_dir,
+            os.path.abspath("tests/fixtures/_monty")
+        )
+
     def test_bad_output(self):
         # should not be making or validating these directories
         user_dir = get_user_dir(user="_alan", vault_dir=self.fixture_dir)
         self.assertFalse(os.path.isdir(user_dir))
-    
+
     @classmethod
     def tearDownClass(cls):
         os.rmdir(cls.user_dir)

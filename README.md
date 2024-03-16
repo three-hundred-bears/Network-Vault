@@ -19,5 +19,4 @@ avoid any potential backward compatibility issues.
 
 This application assumes that both the HFS and HHP environment variables are 
 set to their relevant directories. 
-network_saver/python must be prepended to PYTHONPATH, and network_saver/toolbar 
-must be prepended to HOUDINI_TOOLBAR_PATH.
+Copy the contents of the provided packages dir to $HOUDINI_USER_PREF_DIR/packages.

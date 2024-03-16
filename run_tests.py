@@ -20,7 +20,11 @@ def enableHou():
         if hasattr(sys, "setddlopenflags"):
             sys.setdlopenflags(old_dlopen_flags)
 
+def enableNetworkSaver():
+    sys.path.append(os.path.abspath("python"))
+
 if __name__ == "__main__":
+    enableNetworkSaver()
     enableHou()
     runner = unittest.TextTestRunner()
     tests = unittest.defaultTestLoader.discover("tests")
