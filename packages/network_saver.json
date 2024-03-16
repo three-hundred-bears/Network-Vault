@@ -1,10 +1,10 @@
 {
     "env": [
         {
-            "HOUDINI_TOOLBAR_PATH": "$NETWORK_SAVER_PATH\\network_saver\\toolbar"
+            "HOUDINI_TOOLBAR_PATH": "$NETWORK_SAVER_PATH\\toolbar"
         },
         {
-            "PYTHONPATH": "$NETWORK_SAVER_PATH\\network_saver\\python"
+            "PYTHONPATH": "$NETWORK_SAVER_PATH\\python"
         }
     ]
 }
