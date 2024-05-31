@@ -1,3 +1,4 @@
+"""Common I/O functions and file read operations."""
 
 from getpass import getuser
 import io
@@ -24,7 +25,7 @@ CATEGORY_MAP = {
 }
 
 
-def remap_node_categories(category_name):
+def remap_node_categories(category_name: str) -> str:
     """Remap node type categories to naming convention used by CPIO files.
     
     Copying a node (or nodes) in Houdini creates a temporary CPIO file in
@@ -38,7 +39,7 @@ def remap_node_categories(category_name):
         str: Remapped node category.
     """
 
-    conformed_cat = CATEGORY_MAP.get(category_name)
+    conformed_cat: str = CATEGORY_MAP.get(category_name)
     if not conformed_cat:
         raise RuntimeError(
             'Unsupported context?!\n'
@@ -48,18 +49,18 @@ def remap_node_categories(category_name):
     return conformed_cat
 
 
-def get_data_dir():
+def get_data_dir() -> str:
     """Fetch directory containing module data.
     
     Returns:
         str: Path-like object representing data directory of project.
     """
 
-    cur_dir = Path(__file__)
+    cur_dir: Path = Path(__file__)
     return os.path.join(cur_dir.parents[2], 'data')
 
 
-def get_vault_dir():
+def get_vault_dir() -> str:
     """Fetch vault directory from text file containing it.
 
     Returns:
@@ -67,20 +68,20 @@ def get_vault_dir():
              vault directory.
     """
 
-    vault_file = os.path.join(
+    vault_file: str = os.path.join(
         get_data_dir(),
         'vault_dir.txt'
     )
     with open(vault_file, 'r') as f:
-        vault_path = Path(f.readline().strip())
+        vault_path: Path = Path(f.readline().strip())
     if vault_path.is_absolute():
         return str(vault_path)
-    cur_dir = Path(__file__)
-    project_dir = cur_dir.parents[2]
+    cur_dir: Path = Path(__file__)
+    project_dir: str = cur_dir.parents[2]
     return os.path.join(project_dir, str(vault_path))
 
 
-def get_user_dir(user=None, vault_dir=None):
+def get_user_dir(user: str=None, vault_dir: str=None) -> str:
     """Fetch user directory from vault location.
     
     Args:
@@ -88,24 +89,24 @@ def get_user_dir(user=None, vault_dir=None):
         vault_dir string: Path-like object representing current vualt location
     """
 
-    vault_dir = vault_dir or get_vault_dir()
-    user = user or getuser()
+    vault_dir: str = vault_dir or get_vault_dir()
+    user: str = user or getuser()
     return os.path.join(vault_dir, user)
 
 
-def get_vault_file(user=None, vault_dir=None):
+def get_vault_file(user=None, vault_dir=None) -> str:
     """Fetch vault json file for given user.
 
     Args:
         user string: User determining which vault file to fetch.
     """
 
-    user_dir = get_user_dir(user=user, vault_dir=vault_dir)
-    vault_name = "networks.json"
+    user_dir: str = get_user_dir(user=user, vault_dir=vault_dir)
+    vault_name: str = "networks.json"
     return os.path.join(user_dir, vault_name)
 
 
-def get_node_context(node):
+def get_node_context(node: hou.Node) -> str:
     """Get network category of given node.
     
     Args:
@@ -117,7 +118,7 @@ def get_node_context(node):
     return remap_node_categories(node.type().category().name())
 
 
-def get_network_context(node):
+def get_network_context(node: hou.Node) -> str:
     """Get child network category of given node.
 
     Args:
@@ -125,13 +126,13 @@ def get_network_context(node):
     Returns: Remapped category of internal network of given node.
     """
 
-    category = node.type().childTypeCategory()
+    category: hou.NodeTypeCategory = node.type().childTypeCategory()
     if not category:
         return get_node_context(node)
     return remap_node_categories(category.name())
 
 
-def _make(config_file):
+def _make(config_file: str) -> None:
     """Create vault json for given user.
     
     Args:
@@ -139,14 +140,14 @@ def _make(config_file):
         user string: User to create json file under.
     """
 
-    user_dir = os.path.dirname(config_file)
+    user_dir: str = os.path.dirname(config_file)
     if not os.path.isdir(user_dir):
         os.makedirs(user_dir, mode=0o644)
     with open(config_file, 'x') as config_f:
         json.dump(dict(), config_f)
 
 
-def _notify(config_file):
+def _notify(config_file: str) -> None:
     """Notify user that no vault json currently exists.
     
     Args:
@@ -164,7 +165,7 @@ def _notify(config_file):
     )
 
 
-def read_network_vault(filepath, mode):
+def read_network_vault(filepath: str, mode: str) -> dict:
     """Read contents of vault json to dict.
     
     Args:
@@ -181,8 +182,8 @@ def read_network_vault(filepath, mode):
             "Given filepath {} is not a valid json".format(filepath)
             )
 
-    func_map = {'r': _notify, 'w': _make}
-    func = func_map.get(mode)
+    func_map: dict = {'r': _notify, 'w': _make}
+    func: function = func_map.get(mode)
     if not func:
         raise ValueError("Invalid filemode {}".format(mode))
     if not os.path.isfile(filepath):
@@ -190,15 +191,15 @@ def read_network_vault(filepath, mode):
         return dict()
     try:
         with open(filepath, 'r') as config_f:
-            data = json.load(config_f)
+            data: dict = json.load(config_f)
     except (Exception, io.UnsupportedOperation) as err:
-        data = dict()
+        data: dict = dict()
         print('Warning: Could not load config json at ', filepath)
         print(err)
     return data
 
 
-def read_user_data(user=None, vault_dir=None):
+def read_user_data(user: str=None, vault_dir: str=None) -> dict:
     """Read network vault data for given user.
     
     Args:
@@ -208,13 +209,15 @@ def read_user_data(user=None, vault_dir=None):
         dict: Dict representation of network data for given user.
     """
 
-    user = user or getuser()
-    vault_dir = vault_dir or get_vault_dir()
-    vault_file = get_vault_file(user=user, vault_dir=vault_dir)
+    user: str = user or getuser()
+    vault_dir: str = vault_dir or get_vault_dir()
+    vault_file: str = get_vault_file(user=user, vault_dir=vault_dir)
     return read_network_vault(vault_file, 'r')
 
 
-def delete_network_data(network_name, user=None, vault_dir=None):
+def delete_network_data(
+        network_name: str, user: str=None, vault_dir: str=None
+    ) -> None:
     """Delete given network's entry from vault json.
     
     Args:
@@ -223,13 +226,13 @@ def delete_network_data(network_name, user=None, vault_dir=None):
         vault_dir str: Path-like object representing vault location.
     """
 
-    user = user or getuser()
-    vault_dir = vault_dir or get_vault_dir()
+    user: str = user or getuser()
+    vault_dir: str = vault_dir or get_vault_dir()
 
-    vault_file = get_vault_file(
+    vault_file: str = get_vault_file(
         user=user, vault_dir=vault_dir
     )
-    data = read_network_vault(vault_file, 'r')
+    data: dict = read_network_vault(vault_file, 'r')
 
     # update network data
     try:
@@ -241,7 +244,9 @@ def delete_network_data(network_name, user=None, vault_dir=None):
         json.dump(data, vault_f)
 
 
-def remove_cpio_file(network_name, user=None, vault_dir=None):
+def remove_cpio_file(
+        network_name: str, user: str=None, vault_dir: str=None
+    ) -> None:
     """Remove given network's CPIO file from vault location.
     
     Args:
@@ -250,10 +255,10 @@ def remove_cpio_file(network_name, user=None, vault_dir=None):
         vault_dir str: Path-like object representing vault location.
     """
 
-    user = user or getuser()
-    vault_dir = vault_dir or get_vault_dir()
+    user: str = user or getuser()
+    vault_dir: str = vault_dir or get_vault_dir()
 
-    full_path = os.path.join(
+    full_path: str = os.path.join(
         vault_dir, user, network_name + ".cpio"
     )
     if not os.path.isfile(full_path):

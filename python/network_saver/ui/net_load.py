@@ -13,7 +13,9 @@ import network_saver.utility
 
 class NetLoadDialog(QtWidgets.QWidget):
     """GUI allowing user to load saved networks into Houdini."""
-    def __init__(self, parent=None, user=None, root=None):
+    def __init__(
+            self, parent: QtWidgets.QWidget=None, user: str=None, root: str=None
+        ) -> None:
         """Initializes NetLoad GUI.
 
         Args:
@@ -24,32 +26,32 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         self.setWindowTitle('Load Selected Network')
 
-        self.vault_dir = root or network_saver.utility.get_vault_dir()
-        self.user = user or getuser()
+        self.vault_dir: str = root or network_saver.utility.get_vault_dir()
+        self.user: str = user or getuser()
 
-        vbox = QtWidgets.QVBoxLayout()
+        vbox: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
 
         # user selection
-        hbox = QtWidgets.QHBoxLayout()
-        user_label = QtWidgets.QLabel(self)
+        hbox: QtWidgets.QHBoxLayout = QtWidgets.QHBoxLayout()
+        user_label: QtWidgets.QLabel = QtWidgets.QLabel(self)
         user_label.setText('User:')
-        self.user_combobox = QtWidgets.QComboBox(self)
+        self.user_combobox: QtWidgets.QComboBox = QtWidgets.QComboBox(self)
         hbox.addWidget(user_label)
         hbox.addWidget(self.user_combobox)
         hbox.addStretch()
 
         # network removal
-        self.remove_button = QtWidgets.QPushButton('Remove Network', self)
+        self.remove_button: QtWidgets.QPushButton = QtWidgets.QPushButton('Remove Network', self)
         hbox.addWidget(self.remove_button)
 
         # setup table model 
-        self.table_model = QtGui.QStandardItemModel()
+        self.table_model: QtGui.QStandardItemModel = QtGui.QStandardItemModel()
         self.table_model.setHorizontalHeaderLabels(
             ['Name', 'Houdini Version', 'Context', 'Description']
         )
 
         # setup table view
-        self.table_view = QtWidgets.QTableView()
+        self.table_view: QtWidgets.QTableView = QtWidgets.QTableView()
         self.table_view.setModel(self.table_model)
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.table_view.horizontalHeader().setMaximumHeight(25)
@@ -76,7 +78,7 @@ class NetLoadDialog(QtWidgets.QWidget):
             QtWidgets.QAbstractItemView.SingleSelection
         )
 
-        self.load_button = QtWidgets.QPushButton('Load Network', self)
+        self.load_button: QtWidgets.QPushButton = QtWidgets.QPushButton('Load Network', self)
 
         # layout
         vbox.addLayout(hbox)
@@ -96,26 +98,25 @@ class NetLoadDialog(QtWidgets.QWidget):
             self._handle_user_change
         )
 
-    def sizeHint(self):
+    def sizeHint(self) -> QtCore.QSize:
         """GUI dimensions."""
 
         return QtCore.QSize(700, 250)
 
-    def _handle_user_change(self):
+    def _handle_user_change(self) -> None:
         """Update relevant fields based on current user selection."""
 
-        self.user = self.user_combobox.currentText()
+        self.user: str = self.user_combobox.currentText()
         self.refresh_networks()
 
-    def _set_current_user(self):
+    def _set_current_user(self) -> None:
         """Set user property to current user. Meant to run once during init."""
 
-        index = self.user_combobox.findText(self.user)
-        if index == -1:
-            return
-        self.user_combobox.setCurrentIndex(index)
+        index: int = self.user_combobox.findText(self.user)
+        if index != -1:
+            self.user_combobox.setCurrentIndex(index)
 
-    def _validate_user_dir(self, folder):
+    def _validate_user_dir(self, folder: str) -> bool:
         """Filter func to ensure user directory both exists and contains 
            network json.
 
@@ -125,28 +126,28 @@ class NetLoadDialog(QtWidgets.QWidget):
             bool: Value representing validation status.
         """
 
-        full_path = os.path.join(self.vault_dir, folder)
+        full_path: str = os.path.join(self.vault_dir, folder)
         if not os.path.isdir(full_path):
             return False
-        children = os.listdir(full_path)
+        children: list[str] = os.listdir(full_path)
         if "networks.json" not in children:
             return False
         return True
 
-    def _populate_users(self):
+    def _populate_users(self) -> None:
         """Populate user combobox based on contents of vault dir."""
 
-        user_dirs = filter(self._validate_user_dir, os.listdir(self.vault_dir))
+        user_dirs: list[str] = filter(self._validate_user_dir, os.listdir(self.vault_dir))
         self.user_combobox.addItems(user_dirs)
 
-    def get_current_selection(self):
+    def get_current_selection(self) -> tuple[int]:
         """Get currently selected network as row of indexes.
 
         Returns:
             tuple: Collection of selected row indexes.
         """
 
-        indexes = self.table_view.selectionModel().selectedIndexes()
+        indexes: tuple[int] = self.table_view.selectionModel().selectedIndexes()
         if not indexes:
             if hou.isUIAvailable():
                 hou.ui.displayMessage(
@@ -157,7 +158,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         return indexes
 
-    def get_network_data(self):
+    def get_network_data(self) -> tuple[str]:
         """Fetch data associated with selected network.
 
         Returns:
@@ -165,13 +166,13 @@ class NetLoadDialog(QtWidgets.QWidget):
             str: Category of selected network.
         """
 
-        indexes = self.get_current_selection()
-        name = indexes[0].data(QtCore.Qt.UserRole)
-        context = indexes[2].data(QtCore.Qt.UserRole)
+        indexes: tuple[str] = self.get_current_selection()
+        name: str = indexes[0].data(QtCore.Qt.UserRole)
+        context: str = indexes[2].data(QtCore.Qt.UserRole)
 
         return name, context
 
-    def _validate_root_network(self, current_network, expected_context):
+    def _validate_root_network(self, current_network: hou.PaneTab, expected_context: str) -> str:
         """Ensure current network editor is same category as selected network.
 
         Args:
@@ -187,7 +188,7 @@ class NetLoadDialog(QtWidgets.QWidget):
             )
             raise RuntimeError("Current network editor is locked")
 
-        network_context = network_saver.utility.get_network_context(
+        network_context: str = network_saver.utility.get_network_context(
             current_network
         )
 
@@ -201,7 +202,10 @@ class NetLoadDialog(QtWidgets.QWidget):
                 "Network editor category does not match network category"
             )
 
-    def _paste_selected_network(self, name, context, cur_network):
+    def _paste_selected_network(
+            self, name: str, context: str, 
+            cur_network: hou.paneTabType.NetworkEditor
+        ) -> None:
         """Load selected network from clipboard.
 
         Args:
@@ -217,7 +221,9 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         hou.pasteNodesFromClipboard(cur_network)
 
-    def _wrap_selection_in_netbox(self, name, cur_network):
+    def _wrap_selection_in_netbox(
+            self, name: str, cur_network: hou.Node
+        ) -> None:
         """Create netbox around recently created network.
 
         Args:
@@ -225,7 +231,7 @@ class NetLoadDialog(QtWidgets.QWidget):
             cur_network hou.Node: Current network location.
         """
 
-        netbox = cur_network.createNetworkBox()
+        netbox: hou.NetworkBox = cur_network.createNetworkBox()
         netbox.setName(name)
         netbox.setComment(name)
         netbox.setColor(hou.selectedNodes()[0].color())
@@ -234,16 +240,16 @@ class NetLoadDialog(QtWidgets.QWidget):
         netbox.fitAroundContents()
     
     @staticmethod
-    def _get_cur_network():
+    def _get_cur_network() -> hou.Node:
         """Get root node of current active network editor pane
 
         Returns:
             hou.Node: Root node of current network editor.
         """
-        network_pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+        network_pane: hou.PaneTab = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
         return network_pane.pwd()
 
-    def load_network(self, root_network=None):
+    def load_network(self, root_network: hou.Node=None) -> None:
         """Import selected network into active network editor pane."""
 
         if not root_network and not hou.isUIAvailable():
@@ -254,7 +260,7 @@ class NetLoadDialog(QtWidgets.QWidget):
 
         try:
             name, context = self.get_network_data()
-            cur_network = root_network or self._get_cur_network()
+            cur_network: hou.Node = root_network or self._get_cur_network()
             self._validate_root_network(cur_network, context)
         except RuntimeError:
             # assume we failed network validation
@@ -270,7 +276,7 @@ class NetLoadDialog(QtWidgets.QWidget):
             )
         self.close()
 
-    def remove_network(self):
+    def remove_network(self) -> None:
         """Remove network from GUI and associated json file."""
 
         try:
@@ -300,7 +306,9 @@ class NetLoadDialog(QtWidgets.QWidget):
         except RuntimeError:
             self.close()
 
-    def _construct_network_row(self, network_name, network_data):
+    def _construct_network_row(
+            self, network_name, network_data
+        ) -> list[QtGui.QStandardItem]:
         """Create row representation of given network data.
         
         Args:
@@ -311,20 +319,20 @@ class NetLoadDialog(QtWidgets.QWidget):
             list: List of QStandardItems representing network row in GUI.
         """
 
-        name_item = QtGui.QStandardItem(network_name)
+        name_item: QtGui.QStandardItem = QtGui.QStandardItem(network_name)
         name_item.setData(network_name, QtCore.Qt.UserRole)
-        version_item = QtGui.QStandardItem(network_data['version'])
-        context_item = QtGui.QStandardItem(network_data['context'])
+        version_item: QtGui.QStandardItem = QtGui.QStandardItem(network_data['version'])
+        context_item: QtGui.QStandardItem = QtGui.QStandardItem(network_data['context'])
         context_item.setData(network_data['context'], QtCore.Qt.UserRole)
-        notes_item = QtGui.QStandardItem(network_data['notes'])
+        notes_item: QtGui.QStandardItem = QtGui.QStandardItem(network_data['notes'])
 
-        row = [name_item, version_item, context_item, notes_item]
+        row: list[QtGui.QStandardItem] = [name_item, version_item, context_item, notes_item]
         for item in row:
             item.setEditable(False)
-        
+
         return row
 
-    def _append_network_row(self, network_name, network_data):
+    def _append_network_row(self, network_name: str, network_data: dict) -> None:
         """Add network as row to GUI, with relevant data stored in associated
            columns.
 
@@ -334,16 +342,18 @@ class NetLoadDialog(QtWidgets.QWidget):
                                version, category, and description.
         """
 
-        row = self._construct_network_row(network_name, network_data)
+        row: list[QtGui.QStandardItem] = self._construct_network_row(
+            network_name, network_data
+        )
 
         self.table_model.appendRow(row)
 
-    def refresh_networks(self):
+    def refresh_networks(self) -> None:
         """Refresh networks displayed by GUI."""
 
         self.table_model.setRowCount(0)
 
-        data = network_saver.utility.read_user_data(
+        data: dict = network_saver.utility.read_user_data(
             user=self.user, vault_dir=self.vault_dir
         )
 
@@ -362,11 +372,11 @@ class NetLoadDialog(QtWidgets.QWidget):
         self.table_view.resizeRowsToContents()
 
 
-def launch():
+def launch() -> None:
     """Launch GUI, parenting to Houdini main window."""
 
     try:
-        widget = NetLoadDialog()
+        widget: NetLoadDialog = NetLoadDialog()
     except RuntimeError as err:
         print("Failed to open NetLoad dialog:\n{}".format(err))
         return
