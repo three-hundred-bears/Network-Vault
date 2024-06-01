@@ -2,11 +2,11 @@
 
 # `Network Vault`
 
-</div>
-
 This project is meant to provide an easy, artist-friendly interface that allows 
 users to save and distribute Houdini networks without the need to compile or 
-parameterize them as an HDA. 
+parameterize them as HDAs. 
+
+</div>
 
 ## Overview
 
@@ -18,7 +18,7 @@ Networks are saved with a name and description, additionally saving the
 network category and version of Houdini they were created with in an effort to 
 avoid any potential backward compatibility issues.
 
-The location the network files are saved to is specified in data/vault_dir.txt,
+The location the network files are saved to is specified in `data\vault_dir.txt`,
 and can be either a relative or absolute path to a location on disk.
 
 ## Saving Your Network
@@ -37,26 +37,24 @@ Click on the Load Network shelf tool to open the network loading UI, then specif
 
 The Network Vault can be installed like any other Houdini package, but there are a few extra steps to worry about.
 
-1. Set the HFS and HPP environment variables to the desired version of Houdini. For example:
+1. Set the `HFS` and `HPP` environment variables to the desired version of Houdini. For example:
 ```
 HFS = C:\Program Files\Side Effects Software\Houdini 19.5.435
 HHP = C:\Program Files\Side Effects Software\Houdini 19.5.435\houdini\python3.9libs
 ```
 
-2. Open `packages\\network_saver.json` and replace $NETWORK_SAVER_PATH with your installation location. Alternatively, set the NETWORK_SAVER_PATH environment variable to point to your installation location. For example:
+2. Open `packages\network_saver.json` and replace `$NETWORK_SAVER_PATH` with your installation location. Alternatively, set the `NETWORK_SAVER_PATH` environment variable to point to your installation location. For example:
 ```json
 {
     "env": [
         {
-            "HOUDINI_TOOLBAR_PATH": "C:\\Users\\houle\\Houdini_Projects\\hython\\network_saver\\packages\\toolbar"
+            "HOUDINI_TOOLBAR_PATH": "C:\\Users\\houle\\Houdini_Projects\\hython\\network_saver\\toolbar"
         },
         {
-            "PYTHONPATH": "C:\\Users\\houle\\Houdini_Projects\\hython\\network_saver\\packages\\python"
+            "PYTHONPATH": "C:\\Users\\houle\\Houdini_Projects\\hython\\network_saver\\python"
         }
     ]
 }
 ```
 
-3. Copy `network_saver.json` to `%HOUDINI_USER_PREF_DIR%\\packages`.
-
-4. Enjoy!
+3. Copy `network_saver.json` to `%HOUDINI_USER_PREF_DIR%\packages`.
