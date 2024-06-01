@@ -24,6 +24,7 @@ class NetSaveDialog(QtWidgets.QWidget):
             user str: User to initialize GUI under.
             root str: Path-like object representing vault location.
         """
+
         super(NetSaveDialog, self).__init__(parent)
 
         self.setWindowTitle('Save Selected Network')
@@ -57,7 +58,7 @@ class NetSaveDialog(QtWidgets.QWidget):
 
         return QtCore.QSize(400, 100)
 
-    def get_selected_nodes(self) -> tuple[hou.OpNode]:
+    def get_selected_nodes(self) -> tuple[hou.Node]:
         """Fetch currently selected nodes.
         
         Returns:
